@@ -19,6 +19,7 @@ def new_id():
 
 # Set up some button numbers for the menu
 ID_ABOUT   = new_id()
+ID_INIT    = new_id()
 ID_EXIT    = new_id()
 ID_HELP    = new_id()
 
@@ -68,6 +69,7 @@ class MainWindow(wx.Frame):
         # The & character indicates the short cut key
         filemenu.Append(ID_HELP, "&Help"," Instructions for use")
         filemenu.Append(ID_ABOUT, "&About"," Information about this program")
+        filemenu.Append(ID_INIT, "&Initialize"," Initialze site logins")
         filemenu.AppendSeparator()
         filemenu.Append(ID_EXIT,"E&xit"," Terminate the program")
 
@@ -80,6 +82,7 @@ class MainWindow(wx.Frame):
         # Define the code to be run when a menu option is selected
         wx.EVT_MENU(self, ID_HELP, self.OnHelp)
         wx.EVT_MENU(self, ID_ABOUT, self.OnAbout)
+        wx.EVT_MENU(self, ID_INIT, self.OnInit)
         wx.EVT_MENU(self, ID_EXIT, self.OnExit)
 
         # Buttons on the right, vertically, that are for selecting Well Record images.
@@ -478,10 +481,14 @@ class MainWindow(wx.Frame):
         #print 'ButtonMGSlog'        
         loglist = self._read_log_win()
         #print 'MGS loglist:',loglist[0]
-        fname = self.image_grabber.get_MGS_image(loglist[0])
-        if fname is not None: 
+        OK,fname = self.image_grabber.get_MGS_image(loglist[0])
+        if OK: 
             self.show_output('MGS image: "%s"'%fname, append=False)
             webbrowser.open_new_tab(fname)    
+        else:
+            self.show_output('MGS image "%s" not found'%loglist[0])
+            
+            
     def ButtonCWIlog(self,event):
         #print 'ButtonCWIlog'        
         loglist = self._read_log_win()
@@ -645,8 +652,17 @@ class MainWindow(wx.Frame):
         self.show_output(self.help_text)
 
     def OnAbout(self,e):
-        self.aboutme = wx.MessageDialog( self, self.about_me_text, "About MD5Checker.py", wx.OK)
+        self.aboutme = wx.MessageDialog( self, self.about_me_text, "About Well_Image_GUI.py", wx.OK)
         self.aboutme.ShowModal() 
+
+    def OnInit(self,e):
+        """ we'll use the log window to read in the initialization strings, but we will not parse it 
+            the usual way, so we'll read it in raw
+        """
+        initstring = self.loglist_win.GetValue()
+        OK,msg = self.image_grabber.initialze_logins(initstring)
+        self.show_output(msg, append=False)
+       
 
     def OnExit(self,e):
         # Exit without comment or double check

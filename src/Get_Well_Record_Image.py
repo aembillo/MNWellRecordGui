@@ -86,7 +86,32 @@ class Well_image_grabber():
         self.prefix = prefix
         self.DBGmode = False
         self.passwordkeeper = PasswordKeeper(ringname='MDH well record image retrieval')
-        
+
+    def initialze_logins(self, initstring): 
+        """ login information and private url strings are kept in a ring server. """
+        print 'initialze_logins(%s)'%( initstring)
+        OKlist = []
+        for ring_value in initstring.split('\n'):
+            if ring_value:
+                try:
+                    #print 'ring_value = %s'%ring_value
+                    ring, value = ring_value.split()
+                    #print 'ring, value = %s, %s'%(ring,value)
+                    self.passwordkeeper.set(ringname=ring, password=value)
+                    OKlist.append(ring)
+                    #print 'set them OK'
+                except:
+                    print 'exception raised'
+                    continue
+                    return False, 'Unable to parse "%s"'%ring_value
+        print '... All done with initializing ...'
+        return True, 'Logins stored for \n  ' + ('\n  '.join(OKlist))
+#         if UniqueNo.upper() == "MGSLOGIN":
+#             if len(UniqueNo) != 2:
+#                 return (False,'Initialize MGS login: "MGSLOGIN <url_pattern>"')
+#             self.passwordkeeper.set(ringname='MGS well record image url',password=UniqueNo)
+#             return (False, 'MGSLOGIN has been initialized')    
+           
     def _get_new_filename(self,basename="test",extension="pdf"):
         # Get a unique filename based on basename
         # First, try something formatted like test_001.pdf. After _999 use the Tempfile module
@@ -111,21 +136,40 @@ class Well_image_grabber():
         """
         if self.DBGmode:
             return os.path.join(self.prefix,"190471.pdf")
+
+        print 'get_MGS_image, UniqueNo ="%s"'%UniqueNo
+#         if UniqueNo.upper() == "MGSLOGIN":
+#             if len(UniqueNo) != 2:
+#                 return (False,'Initialize MGS login: "MGSLOGIN <url_pattern>"')
+#             self.passwordkeeper.set(ringname='MGS well record image url',password=UniqueNo)
+#             return (False, 'MGSLOGIN has been initialized')
         
-        mgsurl =  
+        mgsurl = self.passwordkeeper.get(ringname='MGS_well_record_image_url') #'http://mgsweb2.mngs.umn.edu/welllogs/%s.pdf'%UniqueNo
+        print 'mgsurl ="%s"'%mgsurl
+        if not mgsurl:
+            return (False, 'Initialize MGS login: "MGS_well_record_image_url <url_pattern>"') 
+        
+        mgsurl = mgsurl%UniqueNo
+        print 'mgsurl ="%s"'%mgsurl
         try:
             html = urllib2.urlopen(mgsurl).read()
+            print 80*"="
+            print 80*"="
+            print html
+            print 80*"="
+            print 80*"="
         except(urllib2.HTTPError):
             print "Well Record image %s not found at MGS"%UniqueNo
             return None
         # The returned html is a pile of binary gibberish  
         # Write the gibberish to a file, and opens it in a browser. 
         fname = self._get_new_filename(UniqueNo, 'pdf')
+        print 'opening MSGS image file: "%s"'%fname
         f = file(fname, 'w+b')
         f.write(html)
         f.flush()
         f.close()
-        return fname
+        return True,fname
 
     def get_CWI_log(self,UniqueNo,Type="LOG"):
         """ the UniqueNo should be formatted as 6 character text, e.g. "123456", rather than as a RelateID
@@ -165,27 +209,36 @@ class Well_image_grabber():
 #         return
     
         #MDH:
-        if well_list[0].upper() == "MDHLOGIN":
-            if len(well_list) != 4:
-                return (False,'Initialize MDH login: "MDHLOGIN <user> <password> <url_pattern>"')
-            self.passwordkeeper.set(ringname='MDH well record image user',password=well_list[1])
-            self.passwordkeeper.set(ringname='MDH well record image password',password=well_list[2])
-            self.passwordkeeper.set(ringname='MDH well record image url',password=well_list[3])
-#                         prompt='Enter password for MDH well record image retrieval:')
+#         if well_list[0].upper() == "MDHLOGIN":
+#             if len(well_list) != 4:
+#                 return (False,'Initialize MDH login: "MDHLOGIN <user> <password> <url_pattern>"')
+#             self.passwordkeeper.set(ringname='MDH well record image user',password=well_list[1])
+#             self.passwordkeeper.set(ringname='MDH well record image password',password=well_list[2])
+#             self.passwordkeeper.set(ringname='MDH well record image url',password=well_list[3])
+#             return (False, 'MDHLOGIN has been initialized')
+# #                         prompt='Enter password for MDH well record image retrieval:')
         
 #         self.passwordkeeper.set(ringname='MDH well record image user',password=mdhuser)
 #         self.passwordkeeper.set(ringname='MDH well record image password',password=mdhpassword)
 #         self.passwordkeeper.set(ringname='MDH well record image url',password=mdhurl)
+        ringuser = 'MDH_well_record_image_user'
+        ringpass = 'MDH_well_record_image_password'
+        ringurl  = 'MDH_well_record_image_url'
+        mdhuser     = self.passwordkeeper.get(ringname=ringuser)
+        mdhpassword = self.passwordkeeper.get(ringname=ringpass)
+        mdhurl      = self.passwordkeeper.get(ringname=ringurl )
         
-        mdhuser     = self.passwordkeeper.get(ringname='MDH well record image user')
-        mdhpassword = self.passwordkeeper.get(ringname='MDH well record image password')
-        mdhurl      = self.passwordkeeper.get(ringname='MDH well record image url')
-        
-        print mdhurl
-        print mdhuser
-        print mdhpassword
-        print '=================='
-        assert False
+        for key,ring in  ((mdhuser,ringuser),(mdhpassword,ringpass),(mdhurl,ringurl)):
+            if key is None:
+                return False,'Missing initialization value for "%s"'%ring
+#         if (mdhuser is None) or (mdhpassword is None) or (mdhurl is None):
+#             return (False,'Initialize MDH login: "MDHLOGIN <user> <password> <url_pattern>"')
+
+#         print mdhurl
+#         print mdhuser
+#         print mdhpassword
+#         print '=================='
+#         assert False
         # Browser
         br = mechanize.Browser()
         
@@ -298,13 +351,13 @@ class Test(unittest.TestCase):
             if (url):
                 webbrowser.open_new_tab(url) 
 
-        if 0:
+        if 1:
             UniqueNo = "207689" #"190471"
             print W.prefix
             print W._get_new_filename(UniqueNo,"pdf")
-            fname = W.get_MGS_image(UniqueNo)
-            if fname is not None: 
-                print fname
+            OK,fname = W.get_MGS_image(UniqueNo)
+            print OK, fname
+            if OK: 
                 webbrowser.open_new_tab(fname)
         if 0:
             wellid = 15340  
@@ -312,7 +365,7 @@ class Test(unittest.TestCase):
             if (url):
                 webbrowser.open_new_tab(url)  
                   
-        if 1:
+        if 0:
             #UniqueNos = "678244" #"420967"
             well_list = ["678244"]
             fname = W.get_MDH_image(well_list)
