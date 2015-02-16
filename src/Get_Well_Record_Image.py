@@ -1,8 +1,16 @@
-# Basic script to demonstrate opening scanned well logs from MGS or MDH
-# Bill Olsen 
-# Dakota County
-# 2014-11-02
-# Language Python 2.7
+"""
+    Script to open scanned well logs from MGS or MDH
+    Author: Bill Olsen 
+            Dakota County
+            2014-11-02
+
+    Uses keyring library to store passwords and private url strings.
+    
+    ToDo:
+        consider simplifying using the Requests library:
+            http://docs.python-requests.org/en/latest/index.html
+    Language Python 2.7
+"""
 from cgitb import html
 
 print "based on   http://stockrt.github.io/p/emulating-a-browser-in-python-with-mechanize/"
@@ -137,7 +145,7 @@ class Well_image_grabber():
         if self.DBGmode:
             return os.path.join(self.prefix,"190471.pdf")
 
-        print 'get_MGS_image, UniqueNo ="%s"'%UniqueNo
+#        print 'get_MGS_image, UniqueNo ="%s"'%UniqueNo
 #         if UniqueNo.upper() == "MGSLOGIN":
 #             if len(UniqueNo) != 2:
 #                 return (False,'Initialize MGS login: "MGSLOGIN <url_pattern>"')
@@ -145,23 +153,21 @@ class Well_image_grabber():
 #             return (False, 'MGSLOGIN has been initialized')
         
         mgsurl = self.passwordkeeper.get(ringname='MGS_well_record_image_url') #'http://mgsweb2.mngs.umn.edu/welllogs/%s.pdf'%UniqueNo
-        print 'mgsurl ="%s"'%mgsurl
+        #print 'mgsurl ="%s"'%mgsurl
         if not mgsurl:
             return (False, 'Initialize MGS login: "MGS_well_record_image_url <url_pattern>"') 
         
         mgsurl = mgsurl%UniqueNo
-        print 'mgsurl ="%s"'%mgsurl
+        #print 'mgsurl ="%s"'%mgsurl
+        html = "x"
         try:
             html = urllib2.urlopen(mgsurl).read()
-            print 80*"="
-            print 80*"="
-            print html
-            print 80*"="
-            print 80*"="
         except(urllib2.HTTPError):
-            print "Well Record image %s not found at MGS"%UniqueNo
-            return None
-        # The returned html is a pile of binary gibberish  
+            msg = "Well Record image %s not found at MGS"%UniqueNo
+            return False, msg
+        # A valid return value for html is a pdf file having html[:5] == '%PDF-'
+        # A not found Unique throws HTTPError
+        # An invalid Unique throws HTTPError too. 
         # Write the gibberish to a file, and opens it in a browser. 
         fname = self._get_new_filename(UniqueNo, 'pdf')
         print 'opening MSGS image file: "%s"'%fname
@@ -325,7 +331,7 @@ class Well_image_grabber():
         # check that we have received a pdf document, and not a message of no images found
         if html.split()[0] == "<!DOCTYPE":
             msg = "No images for record(s) %s found at MDH"%(", ".join(well_list))
-            return (False, msg)
+            return False, msg
 #         print 80*"#"    
 #         for row in html.split('\n'):
 #             print row
@@ -337,7 +343,7 @@ class Well_image_grabber():
         f.write(html)
         f.flush()
         f.close()
-        return True,fname
+        return True, fname
 
 import unittest
 class Test(unittest.TestCase):
@@ -345,13 +351,25 @@ class Test(unittest.TestCase):
     def testGrabbing(self):
         import webbrowser
         W = Well_image_grabber()
-        if 0:
-            UniqueNo = "207689" #"190471"
-            url = W.get_CWI_log(UniqueNo)
-            if (url):
-                webbrowser.open_new_tab(url) 
-
         if 1:
+            UniqueNo = "x207689" #"190471"
+            url = W.get_CWI_log(UniqueNo)
+            #print 80*"*" + "\n%s\n"%url + 80*"*"
+            if (url):
+                #webbrowser.open_new_tab(url) 
+#                 print 'url = ',url
+#                 response = urllib2.urlopen(url)
+#                 print 'response.info() = ',response.info()
+#                 html = response.read()
+#                 print 'response.read()=' +'\n %s \n'%html[:100] +80*"*"
+#                 # do something
+#                 response.close()  # best practice to close the file
+                try: 
+                    webbrowser.open_new_tab(url)
+                except webbrowser.Error:
+                    print 'webbrowser.Error', webbrowser.Error.message
+
+        elif 1:
             UniqueNo = "207689" #"190471"
             print W.prefix
             print W._get_new_filename(UniqueNo,"pdf")
@@ -359,13 +377,14 @@ class Test(unittest.TestCase):
             print OK, fname
             if OK: 
                 webbrowser.open_new_tab(fname)
-        if 0:
+            
+        elif 0:
             wellid = 15340  
             url = W.get_OnBase_images(wellid) 
             if (url):
                 webbrowser.open_new_tab(url)  
                   
-        if 0:
+        elif 0:
             #UniqueNos = "678244" #"420967"
             well_list = ["678244"]
             fname = W.get_MDH_image(well_list)
@@ -373,7 +392,7 @@ class Test(unittest.TestCase):
                 print fname
                 webbrowser.open_new_tab(fname[1])
             
-        if 0:
+        elif 0:
             #UniqueNos = "268045" #"420967"
             well_list = ["268045"]
             fname = W.get_MDH_image(well_list)

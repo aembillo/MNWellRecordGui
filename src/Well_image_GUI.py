@@ -42,6 +42,13 @@ class MainWindow(wx.Frame):
         title = "pdf page splitter - split out selected pages"
         wx.Frame.__init__(self,parent,wx.ID_ANY, title)
 
+        #label_color = '#D7F4EE'
+        #label_color = '#80FFE6'
+        self.label_color  = '#AAFFEE'
+        self.logbtn_color = '#80FFE6'
+        self.pdfbtn_color = '#AAFFCC'
+        self.pdfbtn_color2= '#80FFB3'
+
         # Add text editor windows and a status bar
         # Each of these is within the current instance
         # so that we can refer to them later.
@@ -90,10 +97,12 @@ class MainWindow(wx.Frame):
         btnlistW = (
             ('  Get MDH image  ', self.ButtonMDHlog, "up to 10 listed well id's from MGS" ),
             ('Get MGS image', self.ButtonMGSlog, "a single well id from MGS" ),
-            ('Get OnBase image', self.ButtonOnBase, "well docs in OnBase by well_id" ),
-            #('Get OnBase project', self.ButtonOnBase, "project docs in OnBase by Project Name" ),
             ('Get CWI log', self.ButtonCWIlog, "a well log from CWI-on-line" ),
             ('Get CWI strat', self.ButtonCWIstrat, "a well stratigraphy log from CWI" ),
+            ('Get OnBase image', self.ButtonOnBase, "well docs in OnBase by well_id" ),
+            ('Get OnBase Project', self.ButtonProject, "project docs in OnBase by Project Name" ),
+            ('Get Project maps', self.ButtonProjectMap, "Project maps & inspections in OnBase by Project Name" ),
+            ('Get Project year', self.ButtonProjectYear, "Project Registered docs OnBase by Project Name & Year" ),
             #('Get em ALL', self.ButtonALLlogs, "all related documents" ),
         )
         for label,method,tip in btnlistW:
@@ -102,39 +111,46 @@ class MainWindow(wx.Frame):
             btn.Bind(wx.EVT_BUTTON, method)
             btn.Bind(wx.EVT_ENTER_WINDOW, self.Enter_image_button_area)
             btn.SetToolTip(wx.ToolTip("Click to find %s"%tip))
+            btn.SetBackgroundColour(self.logbtn_color)
             self.logbtn_sizer.Add(btn,1,wx.EXPAND)
 
-        # Buttons on the right, vertically, that are drop-file areas for running checksums.
-        self.pdfbtn_sizer = wx.BoxSizer(wx.VERTICAL)
+        # Buttons on the right, vertically, that are drop-file areas for existing pdf files.
+        self.pdfbtnR_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.pdfbtnL_sizer = wx.BoxSizer(wx.VERTICAL)
+
         btnlist1 = (
-            ('    Page 1    '  , self.ButtonP1,  ),
-            ('Page 2', self.ButtonP2 ),
-            ('Page 3', self.ButtonP3 ),
-            ('Page 4', self.ButtonP4 ),
-            ('Custom', self.ButtonCustomRange ),
+            ('    Page 1    '  , self.ButtonP1, self.pdfbtnR_sizer ),
+            ('Page 2', self.ButtonP2, self.pdfbtnR_sizer ),
+            ('Page 3', self.ButtonP3, self.pdfbtnR_sizer ),
+            ('Page 4', self.ButtonP4, self.pdfbtnR_sizer ),
+            ('Custom', self.ButtonCustomRange, self.pdfbtnL_sizer ),
         )
-        for label,method in btnlist1:
+        for label,method,sizer in btnlist1:
             id = new_id()
             btn = wx.Button(self, id, label)
             btn.Bind(wx.EVT_BUTTON, method)
             dt = MyFileDropTarget(self,method)
             btn.SetDropTarget(dt)
             btn.Bind(wx.EVT_ENTER_WINDOW, self.Enter_page_button_area)
-            self.pdfbtn_sizer.Add(btn,1,wx.EXPAND)
+            btn.SetBackgroundColour(self.pdfbtn_color)
+            sizer.Add(btn,1,wx.EXPAND)
 
+        # 4 more specialized buttons are needed for the pdf files:
         id = new_id()
         self.build_button = wx.Button(self, id, 'Build')
         self.build_button.Bind(wx.EVT_BUTTON, self.ButtonBuild)
         self.build_button.Bind(wx.EVT_ENTER_WINDOW, self.Enter_build_button_area)
         self.build_button.SetToolTip(wx.ToolTip("Click to begin building a merged document."))
-        self.pdfbtn_sizer.Add(self.build_button,1,wx.EXPAND)
+        self.build_button.SetBackgroundColour(self.pdfbtn_color)
+        self.pdfbtnL_sizer.Add(self.build_button,1,wx.EXPAND)
         
         id = new_id()
         self.publish_button = wx.Button(self, id, 'Publish')
         self.publish_button.Bind(wx.EVT_BUTTON, self.ButtonPublish)
         self.publish_button.Bind(wx.EVT_ENTER_WINDOW, self.Enter_build_button_area)
         #self.publish_button.SetToolTip(wx.ToolTip("Click to begin building a merged document."))
-        self.pdfbtn_sizer.Add(self.publish_button,1,wx.EXPAND)
+        self.publish_button.SetBackgroundColour(self.pdfbtn_color)
+        self.pdfbtnL_sizer.Add(self.publish_button,1,wx.EXPAND)
         self.publish_button.Disable()
 
         id = new_id()
@@ -142,27 +158,26 @@ class MainWindow(wx.Frame):
         self.cancel_button.Bind(wx.EVT_BUTTON, self.ButtonCancel)
         self.cancel_button.Bind(wx.EVT_ENTER_WINDOW, self.Enter_build_button_area)
         self.cancel_button.SetToolTip(wx.ToolTip("Click to Cancel and abort Build."))
-        self.pdfbtn_sizer.Add(self.cancel_button,1,wx.EXPAND)
+        self.cancel_button.SetBackgroundColour(self.pdfbtn_color)
+        self.pdfbtnL_sizer.Add(self.cancel_button,1,wx.EXPAND)
         self.cancel_button.Disable()
+
+        self.pdfbtn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.pdfbtn_sizer.Add(self.pdfbtnL_sizer ,0,wx.EXPAND)
+        self.pdfbtn_sizer.Add(self.pdfbtnR_sizer ,0,wx.EXPAND)
         
-#         btnlist2 = (
-#             ('Build', self.ButtonBuild ),
-#             ('Publish', self.ButtonPublish ),
-#         )
-#         for label,method in btnlist2:
-#             id = new_id()
-#             btn = wx.Button(self, id, label)
-#             btn.Bind(wx.EVT_BUTTON, method)
-#             btn.Bind(wx.EVT_ENTER_WINDOW, self.Enter_build_button_area)
-#             self.pdfbtn_sizer.Add(btn,1,wx.EXPAND)
-           
+        
 
         self.logio_sizer  = wx.BoxSizer(wx.VERTICAL)
-        self.logio_sizer.Add(self.loglist_win,1,wx.EXPAND)
+        self.logio_sizer.Add(wx.StaticText(self, label="Enter well identifiers here"))
+        self.logio_sizer.Add(self.loglist_win,2,wx.EXPAND)
+        self.logio_sizer.Add(wx.StaticText(self, label="Output:"))
+        self.logio_sizer.Add(self.output_win,3,wx.EXPAND)
 
         self.log_sizer= wx.BoxSizer(wx.HORIZONTAL)
         self.log_sizer.Add(self.logio_sizer ,1,wx.EXPAND)
         self.log_sizer.Add(self.logbtn_sizer,0,wx.EXPAND)
+        
         #self.logio_sizer.Add(self.logoutput_win,1,wx.EXPAND)
 
         # Set up the overall frame vertically - text edit window above buttons
@@ -170,15 +185,16 @@ class MainWindow(wx.Frame):
 
         
         self.pdfio_sizer  = wx.BoxSizer(wx.VERTICAL)
+        label = "Drag a pdf file onto a button at the right to split off the indicated page.\nEnter custom pdf file page range below: e.g. 1,2,5-8,15"
+        self.pdfio_sizer.Add(wx.StaticText(self, label=label))
         self.pdfio_sizer.Add(self.pdfpagelist_win,1,wx.EXPAND)
-        self.pdfio_sizer.Add(self.output_win,2,wx.EXPAND)
 
         self.pdf_sizer= wx.BoxSizer(wx.HORIZONTAL)
         self.pdf_sizer.Add(self.pdfio_sizer ,1,wx.EXPAND)
         self.pdf_sizer.Add(self.pdfbtn_sizer,0,wx.EXPAND)
 
         self.main_sizer= wx.BoxSizer(wx.VERTICAL)
-        self.main_sizer.Add(self.log_sizer,1,wx.EXPAND)
+        self.main_sizer.Add(self.log_sizer,2,wx.EXPAND)
         self.main_sizer.Add(self.pdf_sizer,1,wx.EXPAND)
         
 
@@ -188,6 +204,10 @@ class MainWindow(wx.Frame):
         self.SetAutoLayout(1)
         self.main_sizer.Fit(self)
         self.SetSize((500,450))
+        #self.SetBackgroundColour('#D5FFE6')
+        self.SetBackgroundColour(self.label_color)
+        #self.SetForegroundColour('#D5FFE6')
+        #self.SetOwnBackgroundColour('#D5FFE6')
 
         # Show it !!!
         self.Show(1)
@@ -206,7 +226,7 @@ class MainWindow(wx.Frame):
 
         self.image_grabber = Well_image_grabber()
 
-
+        #  wx.StaticText(self, label="Your name :")
 
     def prepare_messages(self):
         import platform
@@ -224,10 +244,19 @@ class MainWindow(wx.Frame):
         self.specific_instruction_text = (
             'Enter a valid page range into the upper window, then drag a pdf file onto the Custom button.')
         self.help_text = (
-            'Drag a pdf file onto one of the buttons at right. '+\
-            'The selected page number will be split off as a distinct pdf document.  '+\
-            'The new document will be named after the old one with a suffix indicating the page number.' +\
-            'The original document is not modified') 
+            '   To retrieve well log images, or CWI database well logs, '+\
+            'enter a unique number, well_id, or RELATEID in the top window, '+\
+            'and select a button to the right.\n'+\
+            '   Documents returned as pdf files can be modified with the pdf tools below. '+\
+            'The tools perform split and merge of specified pages of pdf files. '+\
+            'Drag an input file onto the one of the page range buttons, and it will split '+\
+            'off the indicated page to a new file. '+\
+            'New documents are named after the old one with a suffix indicating the page number.\n'+\
+            '   Use the Custom button to split off 2 or more pages together; '+\
+            'enter the page or page range in the lower window using commas and dashes.\n'+\
+            '   Begin merging pages from two or more pdf files by pressing the Build button. '+\
+            'Then add pages as described above, and press the Publish button to finish.\n'+\
+            '   The input pdf documents are not modified') 
         
         
 #     def compute_checksum(self,fname,block_size=2**20,method='SHA1'):        
@@ -407,12 +436,14 @@ class MainWindow(wx.Frame):
         # add selected page from input1 to output document, (first page has index 0)
         for p in pagelist:
             self.build_output.addPage(input1.getPage(p-1))
-#            self.build_pagecount += 1
+            self.build_pagecount += 1
 
 
     def _publish(self):
         if self.build_output:
-            #try:
+            if not self.build_pagecount > 0:
+                self.show_output("There are no pages to publish")
+                return False
             dlg = wx.FileDialog(self, "Choose destination file",
                                 self.basedir, style=wx.SAVE | wx.OVERWRITE_PROMPT, 
                                 wildcard="PDF files (*.pdf)|*.pdf" )
@@ -426,7 +457,7 @@ class MainWindow(wx.Frame):
                 #print "dlg OK: fname = %s"%outfname
             else:
                 #print "dlg not OK"
-                return
+                return False
             dlg.Destroy()
             #except:
             #    return
@@ -437,7 +468,9 @@ class MainWindow(wx.Frame):
             self.build_output = None
             self.build_mode = False
             self.show_output("Written to:  %s"%(outfname))
-        
+            self.build_pagecount = 0
+            
+            return True
 
 #         self.write_to_clipboard(sumtext)
 #         msg = None
@@ -513,6 +546,34 @@ class MainWindow(wx.Frame):
             self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
             webbrowser.open_new_tab(url) 
 
+    def ButtonProject(self,event):
+        self.show_output('Project not implemented', append=False)
+        return 
+        loglist = self._read_log_win()
+        url = self.image_grabber.get_OnBase_images(loglist[0]) 
+        if (url):
+            self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
+            webbrowser.open_new_tab(url) 
+
+    def ButtonProjectMap(self,event):
+        self.show_output('Project-Map not implemented', append=False)
+        return 
+        loglist = self._read_log_win()
+        url = self.image_grabber.get_OnBase_images(loglist[0]) 
+        if (url):
+            self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
+            webbrowser.open_new_tab(url) 
+
+    def ButtonProjectYear(self,event):
+        self.show_output('Project-Year not implemented', append=False)
+        return 
+        loglist = self._read_log_win()
+        url = self.image_grabber.get_OnBase_images(loglist[0]) 
+        if (url):
+            self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
+            webbrowser.open_new_tab(url) 
+
+
     def ButtonALLlogs(self,event):
         print 'ButtonALLlogs'        
 
@@ -533,38 +594,45 @@ class MainWindow(wx.Frame):
         else:                self._split_dropped_file(fname, pagelist=[4])
 
     def ButtonCustomRange(self,fname):
+        """ Comma separated list of pages or ascending page ranges. A range is created with a dash.
+            e.g. "1" or "1,3-8" or "1,2,5-8,12-25,9"    
+            Not OK: "8-6" (a descending range)
+        """ 
         try:
-            text_list = self.pdfpagelist_win.GetValue()
-            text_list.replace(',',' ')
-            pagelist = np.array(text_list.split(),dtype=int)
-            if self.build_mode: self._append_dropped_file(fname, pagelist=pagelist)
-            else:                self._split_dropped_file(fname, pagelist=pagelist)
-            #self._split_dropped_file(fname, pagelist=pagelist)
+            user_pages = self.pdfpagelist_win.GetValue()
+            ranges = (x.split("-") for x in user_pages.split(","))
+            pagelist = np.array([i for r in ranges for i in range(int(r[0]), int(r[-1]) + 1)])
+            if self.build_mode: 
+                self._append_dropped_file(fname, pagelist=pagelist)
+            else:                
+                self._split_dropped_file(fname, pagelist=pagelist)
         except:
-            self.show_output("Unable to interpret page list, no action taken")
+            self.show_output('Unable to interpret page list, no action taken:\n"%s"'%user_pages)
 
     def ButtonBuild(self,event):
         if not self.build_mode:
-#             self.show_output("Build canceled.")
-#             self.build_mode = False
-#             self.publish_button.Hide()
-#         else:
             self.show_output("Begin adding pages by dragging documents onto Page buttons.")
             self.build_mode = True
+            self.build_pagecount = 0
             self.build_output = PdfFileWriter()
             self.publish_button.Show()
             self.build_button.Disable()
             self.cancel_button.Enable()
             self.publish_button.Enable()
+            self.cancel_button.SetBackgroundColour(self.pdfbtn_color2)
+            self.publish_button.SetBackgroundColour(self.pdfbtn_color2)
 
     def ButtonCancel(self,event):
         if self.build_mode:
             self.show_output("Build canceled.")
             self.build_mode = False
+            self.build_pagecount = 0
             self.build_output = None
             self.build_button.Enable()
             self.cancel_button.Disable()
             self.publish_button.Disable()
+            self.cancel_button.SetBackgroundColour(self.pdfbtn_color)
+            self.publish_button.SetBackgroundColour(self.pdfbtn_color)
 #             
 #         else:
 #             self.show_output("Begin adding pages by dragging documents onto Page buttons.")
@@ -575,12 +643,14 @@ class MainWindow(wx.Frame):
     def ButtonPublish(self,event):
         if self.build_mode:
             self.show_output("Publishing.",append=True)
-            self._publish()
-            self.build_mode = False
-            self.build_output = None
-            self.build_button.Enable()
-            self.cancel_button.Disable()
-            self.publish_button.Disable()
+            if self._publish():
+                self.build_mode = False
+                self.build_output = None
+                self.build_button.Enable()
+                self.cancel_button.Disable()
+                self.publish_button.Disable()
+                self.cancel_button.SetBackgroundColour(self.pdfbtn_color)
+                self.publish_button.SetBackgroundColour(self.pdfbtn_color)
         else:
             self.show_output("No action. Not in Build mode.")
 
