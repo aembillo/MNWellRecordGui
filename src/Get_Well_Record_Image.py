@@ -84,16 +84,50 @@ class Well_image_grabber():
     
         The url methods for MDH images differ because of the secure log in protocol.
     """     
-    def __init__(self,prefix=None):
-        # Determine the file location for placing the image files.
-        if not prefix:
-            for prefix in ('C:/_OnBase_scan_temp_folder/scratch_images','E:/bill/scratch/images','xxx'):
-                if os.path.exists(prefix):
-                    break
-        assert prefix != 'xxx'
-        self.prefix = prefix
+#     def __init__(self,prefix=None):
+    def __init__(self,initfile):
+        """ the init file should have key:value pairs separated by whitespace on each line.
+            the init file should have the following keys:
+                MDH_well_record_image_url    
+                MGS_well_record_image_url    
+                DAKCO_OnBase_well_id_url    
+                DAKCO_OnBase_project_url     
+                DAKCO_OnBase_project_map_url
+                DAKCO_OnBase_project_year_url
+                temp_file_path  <Where pdf files are dumped.  Multiple paths can be specified, the last one that exists will be used.>
+        """    
+        f = open(initfile,'r')
+        rows = f.read()
+        f.close()
+#         print rows
+#         print 80*';'
+        self.userdict = {}
+        for keyvalue in rows.split('\n'):
+#             print 'A ',keyvalue
+            if not len(keyvalue)>2:
+                continue
+            key,value = keyvalue.split()
+#             print 'B ',key,value
+            if key == "temp_file_path":
+                if os.path.exists(value):
+                    self.userdict[key] = value
+            else:
+                self.userdict[key] = value
+        self.prefix = self.userdict.get('temp_file_path')
         self.DBGmode = False
         self.passwordkeeper = PasswordKeeper(ringname='MDH well record image retrieval')
+#         for key,value in self.userdict.iteritems():
+#             print key,value
+            
+#         # Determine the file location for placing the image files.
+#         if not prefix:
+#             for prefix in ('C:/_OnBase_scan_temp_folder/scratch_images','E:/bill/scratch/images','xxx'):
+#                 if os.path.exists(prefix):
+#                     break
+#         assert prefix != 'xxx'
+#         self.prefix = prefix
+#         self.DBGmode = False
+#         self.passwordkeeper = PasswordKeeper(ringname='MDH well record image retrieval')
 
     def initialze_logins(self, initstring): 
         """ login information and private url strings are kept in a ring server. """
@@ -136,8 +170,45 @@ class Well_image_grabber():
         return fname
 
     def get_OnBase_images(self,well_id):
-        oburl = "http://EDWEB1/AppNet/docpop/docpop.aspx?KT636_0_0_0=%s&clienttype=activex&cqid=1017"%well_id
+        oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_well_id_url')
+        oburl = self.userdict.get('DAKCO_OnBase_well_id_url')
+#         oburl = "http://EDWEB1/AppNet/docpop/docpop.aspx?KT636_0_0_0=%s&clienttype=activex&cqid=1017"%well_id.upper()
+        oburl = oburl%well_id.upper()
         return oburl
+
+    def get_OnBase_project(self,projectname,projectyear=None, doctype=None):
+        """ Query OnBase for documents indexed to project name or project name and year.
+        
+            There are 3 options for the query:
+                Project Name         - All doctypes
+                Project Name         - Map doctypes only (also includes inspections)
+                Project Name & year  - All doctypes
+            Note that the project name has to be re-formatted for the url
+            e.g. MPCA BUNNY'S SERVICE CENTER => MPCA+BUNNY%27S+SERVICE+CENTER
+            Note that the url's do not appear to be case sensitive, but we'll upper case the project name for clarity.
+        """
+        projectname = projectname.strip().upper().replace(" ","+").replace("'","%27")
+        if (projectyear is None) and (doctype is None):
+#             url = "http://EDWEB3/AppNet/docpop/docpop.aspx?KT646_0_0_0=%s&clienttype=activex&cqid=1068"%projectname
+#             oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_project_url')
+            oburl = self.userdict.get('DAKCO_OnBase_project_url')
+            url = oburl%projectname
+        elif (projectyear is None) and (doctype == "MAP"):
+#             url = "http://EDWEB3/AppNet/docpop/docpop.aspx?KT646_0_0_0=%s&clienttype=activex&cqid=1106"%projectname
+#             oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_project_map_url')
+            oburl = self.userdict.get('DAKCO_OnBase_project_map_url')
+            url = oburl%projectname
+        elif (projectyear) and (doctype is None):
+#             url = "http://EDWEB3/AppNet/docpop/docpop.aspx?KT646_0_0_0=%s&KT863_0_0_0=%i&clienttype=activex&cqid=1067"%(projectname,int(projectyear))
+#             oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_project_year_url')
+            oburl = self.userdict.get('DAKCO_OnBase_project_year_url')
+            try:
+                yr = int(projectyear)
+                assert (yr>1949) and (yr<2020)
+                url = oburl%(projectname,yr)
+            except:
+                return None
+        return url
     
     def get_MGS_image(self,UniqueNo):
         """ the UniqueNo should be formatted as 6 character text, e.g. "123456", rather than as a RelateID
@@ -152,7 +223,8 @@ class Well_image_grabber():
 #             self.passwordkeeper.set(ringname='MGS well record image url',password=UniqueNo)
 #             return (False, 'MGSLOGIN has been initialized')
         
-        mgsurl = self.passwordkeeper.get(ringname='MGS_well_record_image_url') #'http://mgsweb2.mngs.umn.edu/welllogs/%s.pdf'%UniqueNo
+#         mgsurl = self.passwordkeeper.get(ringname='MGS_well_record_image_url') #'http://mgsweb2.mngs.umn.edu/welllogs/%s.pdf'%UniqueNo
+        mgsurl = self.userdict.get('MGS_well_record_image_url')
         #print 'mgsurl ="%s"'%mgsurl
         if not mgsurl:
             return (False, 'Initialize MGS login: "MGS_well_record_image_url <url_pattern>"') 
@@ -299,8 +371,8 @@ class Well_image_grabber():
         #print "\n =============== log in ==============\n"
         br.select_form(nr=0)               # Find first form of web page
         br.form["username"] = mdhuser
-        #br.form["password"] = mdhpassword    
-        br.form["password"] =  self.passwordkeeper.get(ringname='MDH well record image retrieval')
+        br.form["password"] = mdhpassword    
+        #br.form["password"] =  self.passwordkeeper.get(ringname='MDH well record image retrieval')
         br.submit()                    # submit
     
     #    print "\n =============== log in response ==============\n"
@@ -350,7 +422,7 @@ class Test(unittest.TestCase):
 
     def testGrabbing(self):
         import webbrowser
-        W = Well_image_grabber()
+        W = Well_image_grabber("WellRecordGui.ini")
         if 1:
             UniqueNo = "x207689" #"190471"
             url = W.get_CWI_log(UniqueNo)

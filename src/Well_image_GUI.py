@@ -39,11 +39,11 @@ class MyFileDropTarget(wx.FileDropTarget):
 
 class MainWindow(wx.Frame):
     def __init__(self,parent):
-        title = "pdf page splitter - split out selected pages"
+        self.initfile = "WellRecordGui.ini"
+        title = "MNWell Record Viewer"
         wx.Frame.__init__(self,parent,wx.ID_ANY, title)
 
-        #label_color = '#D7F4EE'
-        #label_color = '#80FFE6'
+        # Let's give the app a little color
         self.label_color  = '#AAFFEE'
         self.logbtn_color = '#80FFE6'
         self.pdfbtn_color = '#AAFFCC'
@@ -57,8 +57,6 @@ class MainWindow(wx.Frame):
 
         self.pdfpagelist_win = wx.TextCtrl(self, 1, style=wx.TE_MULTILINE)
         self.pdfpagelist_win.Bind(wx.EVT_ENTER_WINDOW, self.Enter_pdfpagelist_window)
-#         self.target_dir_win = wx.TextCtrl(self, 1, style=wx.TE_MULTILINE)
-#         self.target_dir_win.Bind(wx.EVT_ENTER_WINDOW, self.Enter_target_dir_window)
         self.output_win = wx.TextCtrl(self, 1, style=wx.TE_MULTILINE)
         self.output_win.Bind(wx.EVT_ENTER_WINDOW, self.Enter_output_window)
         
@@ -67,7 +65,6 @@ class MainWindow(wx.Frame):
         font = wx.SystemSettings_GetFont(wx.SYS_SYSTEM_FONT)
         font.SetPointSize(14)
         self.pdfpagelist_win.SetFont(font)
-#         self.target_dir_win.SetFont(font)
         self.output_win.SetFont(font)
 
 
@@ -92,17 +89,17 @@ class MainWindow(wx.Frame):
         wx.EVT_MENU(self, ID_INIT, self.OnInit)
         wx.EVT_MENU(self, ID_EXIT, self.OnExit)
 
-        # Buttons on the right, vertically, that are for selecting Well Record images.
+        # Buttons on the right, arranged     vertically, that are for selecting Well Record images.
         self.logbtn_sizer = wx.BoxSizer(wx.VERTICAL)
         btnlistW = (
             ('  Get MDH image  ', self.ButtonMDHlog, "up to 10 listed well id's from MGS" ),
             ('Get MGS image', self.ButtonMGSlog, "a single well id from MGS" ),
             ('Get CWI log', self.ButtonCWIlog, "a well log from CWI-on-line" ),
             ('Get CWI strat', self.ButtonCWIstrat, "a well stratigraphy log from CWI" ),
-            ('Get OnBase image', self.ButtonOnBase, "well docs in OnBase by well_id" ),
-            ('Get OnBase Project', self.ButtonProject, "project docs in OnBase by Project Name" ),
-            ('Get Project maps', self.ButtonProjectMap, "Project maps & inspections in OnBase by Project Name" ),
-            ('Get Project year', self.ButtonProjectYear, "Project Registered docs OnBase by Project Name & Year" ),
+            ('Get OnBase image', self.ButtonOnBaseWellid, "well docs in OnBase by well_id" ),
+            ('Get OnBase Project', self.ButtonOnBaseProject, "project docs in OnBase by Project Name" ),
+            ('Get Project maps', self.ButtonOnBaseProjectMap, "Project maps & inspections in OnBase by Project Name" ),
+            ('Get Project year', self.ButtonOnBaseProjectYear, "Project Registered docs OnBase by Project Name & Year" ),
             #('Get em ALL', self.ButtonALLlogs, "all related documents" ),
         )
         for label,method,tip in btnlistW:
@@ -224,15 +221,17 @@ class MainWindow(wx.Frame):
         self.build_mode = False
         self.build_output = None
 
-        self.image_grabber = Well_image_grabber()
+        self.image_grabber = Well_image_grabber(self.initfile)
 
         #  wx.StaticText(self, label="Your name :")
 
     def prepare_messages(self):
         import platform
         self.about_me_text = '\n'.join((
-                   'pdf_splitter.py',
-                   'A graphical tool for splitting out individual pages or a range of selected pages from pdf documents.',
+                   'MN Well Record Viewer version 0.1',
+                   '  Graphical tools for',
+                   '    accessing well records, and',   
+                   '    splitting and merging pdf files.',
                    ' ',
                    '  Python version: %s'%platform.python_version(),
                    '  Based on the libraries:',
@@ -471,26 +470,11 @@ class MainWindow(wx.Frame):
             self.build_pagecount = 0
             
             return True
-
-#         self.write_to_clipboard(sumtext)
-#         msg = None
-#         for v in self.pdfpagelist_win.GetValue().split():
-#             print len(v),len(sumtext)
-#             if len(v)==len(sumtext): #then we are likely comparing a target value, so lets say the result: #self.chksum_size.get(method,0):
-#                 if v==sumtext:  
-#                     msg = '%s MATCHES\n\nFile %s\n%s = %s'%(method, fname, method, sumtext)
-#                     background_color = 'lime green'
-#                 else:  
-#                     msg = '%s !!! DOES NOT MATCH !!!\n\nFile %s\n%s = %s'%(method, fname, method, sumtext)
-#                     background_color = 'red'
-#                 break
-#         if not msg:
-#             msg = 'File name = %s\n%s = %s\n\n%s'%(fname, method, sumtext, self.specific_instruction_text%(method, method))
-#             background_color = 'white'
-#             
-#         self.output_win.SetBackgroundColour(background_color)
-#         self.show_output(msg)
                 
+    def _read_log_win_plain(self):
+        rv = self.loglist_win.GetValue()     
+        return rv
+           
     def _read_log_win(self):
         text_list = self.loglist_win.GetValue()
         text_list.replace(',',' ')
@@ -538,7 +522,7 @@ class MainWindow(wx.Frame):
         if (url):
             self.show_output('CWI strat log found: "%s"'%loglist[0], append=False)
             webbrowser.open_new_tab(url) 
-    def ButtonOnBase(self,event):
+    def ButtonOnBaseWellid(self,event):
         #print 'ButtonCWIstrat'        
         loglist = self._read_log_win()
         url = self.image_grabber.get_OnBase_images(loglist[0]) 
@@ -546,32 +530,75 @@ class MainWindow(wx.Frame):
             self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
             webbrowser.open_new_tab(url) 
 
-    def ButtonProject(self,event):
-        self.show_output('Project not implemented', append=False)
-        return 
-        loglist = self._read_log_win()
-        url = self.image_grabber.get_OnBase_images(loglist[0]) 
+    def ButtonOnBaseProject(self,event):
+        #print 'ButtonCWIstrat'        
+        projectname = self._read_log_win_plain()
+        if not projectname:
+            return
+        url = self.image_grabber.get_OnBase_project(projectname, projectyear=None, doctype="MAP")  
+        print url
         if (url):
-            self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
+            self.show_output('OnBase docs found for"%s"'%projectname, append=False)
             webbrowser.open_new_tab(url) 
+        else:
+            self.show_output('No OnBase docs for "%s"'%projectname, append=False)
 
-    def ButtonProjectMap(self,event):
-        self.show_output('Project-Map not implemented', append=False)
-        return 
-        loglist = self._read_log_win()
-        url = self.image_grabber.get_OnBase_images(loglist[0]) 
-        if (url):
-            self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
-            webbrowser.open_new_tab(url) 
+    def ButtonOnBaseProjectMap(self,event):
+        #print 'ButtonOnBaseProjectMap'        
+        projectname = self._read_log_win_plain()
+        if not projectname:
+            return
 
-    def ButtonProjectYear(self,event):
-        self.show_output('Project-Year not implemented', append=False)
-        return 
-        loglist = self._read_log_win()
-        url = self.image_grabber.get_OnBase_images(loglist[0]) 
+        url = self.image_grabber.get_OnBase_project(projectname, projectyear=None, doctype="MAP")  
+        print url        
         if (url):
-            self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
+            self.show_output('OnBase docs found for"%s"'%projectname, append=False)
             webbrowser.open_new_tab(url) 
+        else:
+            self.show_output('No OnBase Project Maps for "%s"'%projectname, append=False)
+
+    def ButtonOnBaseProjectYear(self,event):
+        try:
+            args = self._read_log_win_plain().split()
+            projectyear = args[-1]
+            projectname = ' '.join(args[:-1])
+        except:
+            return
+        url = self.image_grabber.get_OnBase_project(projectname, projectyear=projectyear, doctype=None)  
+        print url        
+        if (url):
+            self.show_output('OnBase docs found for"%s"'%projectname, append=False)
+            webbrowser.open_new_tab(url) 
+        else:
+            self.show_output('No OnBase Project Maps for "%s"'%projectname, append=False)
+            
+            
+#     def ButtonProject(self,event):
+#         self.show_output('Project not implemented', append=False)
+#         return 
+#         loglist = self._read_log_win()
+#         url = self.image_grabber.get_OnBase_images(loglist[0]) 
+#         if (url):
+#             self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
+#             webbrowser.open_new_tab(url) 
+# 
+#     def ButtonProjectMap(self,event):
+#         self.show_output('Project-Map not implemented', append=False)
+#         return 
+#         loglist = self._read_log_win()
+#         url = self.image_grabber.get_OnBase_images(loglist[0]) 
+#         if (url):
+#             self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
+#             webbrowser.open_new_tab(url) 
+# 
+#     def ButtonProjectYear(self,event):
+#         self.show_output('Project-Year not implemented', append=False)
+#         return 
+#         loglist = self._read_log_win()
+#         url = self.image_grabber.get_OnBase_images(loglist[0]) 
+#         if (url):
+#             self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
+#             webbrowser.open_new_tab(url) 
 
 
     def ButtonALLlogs(self,event):
