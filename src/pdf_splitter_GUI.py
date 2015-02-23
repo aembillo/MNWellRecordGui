@@ -6,7 +6,7 @@ import os
 
 # for manipulating pdf files
 from pyPdf import PdfFileWriter, PdfFileReader
-import numpy as np
+#import numpy as np
 
 __id_counter = 100
 def new_id():
@@ -300,7 +300,8 @@ class MainWindow(wx.Frame):
        
         # validate page range
         infile_pages = input1.getNumPages()
-        if (np.min(pagelist) <= 0) or (infile_pages < np.max(pagelist)):
+#         if (np.min(pagelist) <= 0) or (infile_pages < np.max(pagelist)):
+        if (min(pagelist) <= 0) or (infile_pages < max(pagelist)):
             self.show_output("ERROR -- Document %s has %i pages. Cannot print range %s"%(infname, infile_pages, pagelist))
             return
         
@@ -349,7 +350,8 @@ class MainWindow(wx.Frame):
         
         # validate page range
         infile_pages = input1.getNumPages()
-        if (np.min(pagelist) <= 0) or (infile_pages < np.max(pagelist)):
+#         if (np.min(pagelist) <= 0) or (infile_pages < np.max(pagelist)):
+        if (min(pagelist) <= 0) or (infile_pages < max(pagelist)):
             self.show_output("\nERROR -- Document has %i pages. Cannot print range %s"%(infile_pages, pagelist), append=True)
             return
         
@@ -433,14 +435,21 @@ class MainWindow(wx.Frame):
 
     def ButtonCustomRange(self,fname):
         try:
-            text_list = self.pagelist_win.GetValue()
-            text_list.replace(',',' ')
-            pagelist = np.array(text_list.split(),dtype=int)
-            if self.build_mode: self._append_dropped_file(fname, pagelist=pagelist)
-            else:                self._split_dropped_file(fname, pagelist=pagelist)
-            #self._split_dropped_file(fname, pagelist=pagelist)
+            srctext = self.pagelist_win.GetValue()
+            print type(srctext), srctext
+#             text_list.replace(',',' ')
+#             pagelist = np.array(text_list.split(),dtype=int)
+            pagelist = [int(i) for r in ((x.split("-") for x in srctext.split(","))) for i in range(int(r[0]), int(r[-1])+1)]
+            print pagelist
+            self.show_output("Custom page range: %s"%pagelist)
         except:
             self.show_output("Unable to interpret page list, no action taken")
+        try:
+            if self.build_mode: self._append_dropped_file(fname, pagelist=pagelist)
+            else:                self._split_dropped_file(fname, pagelist=pagelist)
+        except:
+            pass
+            #self._split_dropped_file(fname, pagelist=pagelist)
 
     def ButtonBuild(self,event):
         if not self.build_mode:
