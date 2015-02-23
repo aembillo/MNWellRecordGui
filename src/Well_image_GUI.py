@@ -535,7 +535,7 @@ class MainWindow(wx.Frame):
         projectname = self._read_log_win_plain()
         if not projectname:
             return
-        url = self.image_grabber.get_OnBase_project(projectname, projectyear=None, doctype="MAP")  
+        url = self.image_grabber.get_OnBase_project(projectname, projectyear=None, doctype=None)  
         print url
         if (url):
             self.show_output('OnBase docs found for"%s"'%projectname, append=False)
