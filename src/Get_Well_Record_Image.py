@@ -95,7 +95,8 @@ class Well_image_grabber():
                 DAKCO_OnBase_project_map_url
                 DAKCO_OnBase_project_year_url
                 temp_file_path  <Where pdf files are dumped.  Multiple paths can be specified, the last one that exists will be used.>
-        """    
+        """   
+        self.initfile = initfile 
         f = open(initfile,'r')
         rows = f.read()
         f.close()
@@ -128,6 +129,38 @@ class Well_image_grabber():
 #         self.prefix = prefix
 #         self.DBGmode = False
 #         self.passwordkeeper = PasswordKeeper(ringname='MDH well record image retrieval')
+
+    def set_pdfdir(self):
+        pdfdirkey = "temp_file_path"
+        pdfdir = self.userdict[pdfdirkey]
+#        pdfdir = self.prefix
+        if not pdfdir:
+            pdfdir = os.curdir
+        #f = open(initfile,'r')
+        dlg = wx.FileDialog(self, "Choose destination file",
+                    pdfdir, style=wx.FD_CHANGE_DIR, 
+                    wildcard="Temp dir for PDF files (*.*)|*.*" )
+        if dlg.ShowModal() == wx.ID_OK:
+            print 'dlg.GetPath()',dlg.GetPath()
+            #pdfpath = os.path(dlg.GetPath())
+            pdfdir = os.path.dirname(dlg.GetPath())
+            self.userdict["temp_file_path"] = pdfdir
+            self.prefix = pdfdir
+            print "dlg OK: fname = %s"%pdfdir
+        else:
+            print "dlg not OK"
+            return False
+        dlg.Destroy()
+        #self.show_output(msg, append=False)
+        f = open(self.initfile,'w')
+        keys = self.userdict.keys()
+        keys.sort()
+        fmt = "%s\t%s\n"
+        for key,value in sorted(self.userdict.iteritems()):
+            f.write(fmt%(key,value))
+        f.close()                
+
+    
 
     def initialze_logins(self, initstring): 
         """ login information and private url strings are kept in a ring server. """

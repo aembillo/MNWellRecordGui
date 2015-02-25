@@ -20,6 +20,7 @@ def new_id():
 # Set up some button numbers for the menu
 ID_ABOUT   = new_id()
 ID_INIT    = new_id()
+ID_PDFDIR  = new_id()
 ID_EXIT    = new_id()
 ID_HELP    = new_id()
 
@@ -74,6 +75,7 @@ class MainWindow(wx.Frame):
         filemenu.Append(ID_HELP, "&Help"," Instructions for use")
         filemenu.Append(ID_ABOUT, "&About"," Information about this program")
         filemenu.Append(ID_INIT, "&Initialize"," Initialze site logins")
+        filemenu.Append(ID_PDFDIR, "&Directory"," Set directory for pdf files")
         filemenu.AppendSeparator()
         filemenu.Append(ID_EXIT,"E&xit"," Terminate the program")
 
@@ -87,6 +89,7 @@ class MainWindow(wx.Frame):
         wx.EVT_MENU(self, ID_HELP, self.OnHelp)
         wx.EVT_MENU(self, ID_ABOUT, self.OnAbout)
         wx.EVT_MENU(self, ID_INIT, self.OnInit)
+        wx.EVT_MENU(self, ID_PDFDIR, self.OnPdfDir)
         wx.EVT_MENU(self, ID_EXIT, self.OnExit)
 
         # Buttons on the right, arranged     vertically, that are for selecting Well Record images.
@@ -759,7 +762,37 @@ class MainWindow(wx.Frame):
         initstring = self.loglist_win.GetValue()
         OK,msg = self.image_grabber.initialze_logins(initstring)
         self.show_output(msg, append=False)
-       
+
+    def OnPdfDir(self,e):
+        pdfdirkey = "temp_file_path"
+        pdfdir = self.image_grabber.userdict[pdfdirkey]
+#        pdfdir = self.prefix
+        if not pdfdir:
+            pdfdir = os.curdir
+        #f = open(initfile,'r')
+        dlg = wx.FileDialog(self, "Choose destination file",
+                    pdfdir, style=wx.FD_CHANGE_DIR, 
+                    wildcard="Temp dir for PDF files (*.*)|*.*" )
+        if dlg.ShowModal() == wx.ID_OK:
+            print 'dlg.GetPath()',dlg.GetPath()
+            #pdfpath = os.path(dlg.GetPath())
+            pdfdir = os.path.dirname(dlg.GetPath())
+            self.image_grabber.userdict["temp_file_path"] = pdfdir
+            self.image_grabber.prefix = pdfdir
+            print "dlg OK: fname = %s"%pdfdir
+        else:
+            print "dlg not OK"
+            return False
+        dlg.Destroy()
+        #self.show_output(msg, append=False)
+        f = open(self.initfile,'w')
+        fmt = "%s\t%s\n"
+        for key,value in sorted(self.image_grabber.userdict.iteritems()):
+            f.write(fmt%(key,value))
+        f.close()   
+        msg = 'Edited init file: %s\nSet pdf file directory to "%s"'%(f.name,pdfdir)
+        if msg:
+            self.show_output(msg, append=False)
 
     def OnExit(self,e):
         # Exit without comment or double check
