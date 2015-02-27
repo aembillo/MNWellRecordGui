@@ -20,6 +20,7 @@ def new_id():
 # Set up some button numbers for the menu
 ID_ABOUT   = new_id()
 ID_INIT    = new_id()
+ID_PDFDIR  = new_id()
 ID_EXIT    = new_id()
 ID_HELP    = new_id()
 
@@ -39,7 +40,10 @@ class MyFileDropTarget(wx.FileDropTarget):
 
 class MainWindow(wx.Frame):
     def __init__(self,parent):
-        self.initfile = "WellRecordGui.ini"
+        #self.initfile = "WellRecordGui.ini"
+        self.initfile = os.path.join(os.getcwd(),"WellRecordGui.ini")  #Better,  dumps it in the root source code folder
+        print 'inifile:  %s'%self.initfile
+        
         title = "MNWell Record Viewer"
         wx.Frame.__init__(self,parent,wx.ID_ANY, title)
 
@@ -74,6 +78,7 @@ class MainWindow(wx.Frame):
         filemenu.Append(ID_HELP, "&Help"," Instructions for use")
         filemenu.Append(ID_ABOUT, "&About"," Information about this program")
         filemenu.Append(ID_INIT, "&Initialize"," Initialze site logins")
+        filemenu.Append(ID_PDFDIR, "&pdfDirectory"," Set directory for pdf files")
         filemenu.AppendSeparator()
         filemenu.Append(ID_EXIT,"E&xit"," Terminate the program")
 
@@ -87,6 +92,7 @@ class MainWindow(wx.Frame):
         wx.EVT_MENU(self, ID_HELP, self.OnHelp)
         wx.EVT_MENU(self, ID_ABOUT, self.OnAbout)
         wx.EVT_MENU(self, ID_INIT, self.OnInit)
+        wx.EVT_MENU(self, ID_PDFDIR, self.OnPdfDir)
         wx.EVT_MENU(self, ID_EXIT, self.OnExit)
 
         # Buttons on the right, arranged     vertically, that are for selecting Well Record images.
@@ -214,7 +220,6 @@ class MainWindow(wx.Frame):
         self.prepare_messages()
         self.loglist_win.SetValue("<Unique numbers or well_id's here>")
         self.pdfpagelist_win.SetValue("<Enter custom pdf file page ranges here>")
-#         self.target_dir_win.SetValue("<Enter custom target directory here>")
         self.output_win.SetValue(self.help_text )
         self.output_status_text = 'Results display here'
         
@@ -254,8 +259,8 @@ class MainWindow(wx.Frame):
             '   Use the Custom button to split off 2 or more pages together; '+\
             'enter the page or page range in the lower window using commas and dashes.\n'+\
             '   Begin merging pages from two or more pdf files by pressing the Build button. '+\
-            'Then add pages as described above, and press the Publish button to finish.\n'+\
-            '   The input pdf documents are not modified') 
+            'Then add pages as described above, and press the Publish button to finish. '+\
+            '(No pdf documents will be overwritten.)') 
         
         
 #     def compute_checksum(self,fname,block_size=2**20,method='SHA1'):        
@@ -363,12 +368,20 @@ class MainWindow(wx.Frame):
         # pages is a string like '1,2,None' meaning from page 1 to page 2 rotate None
         if pagelist is None:
             return
+        if str(type(infname)) == "<class 'wx._core.CommandEvent'>":
+            # catch a button click as opposed to a dropped file event.
+            self.show_output("Drag source file onto this button to extract page(s) %s"%pagelist)
+            return
         self.clear_txt_win(self.output_win)
         if not type(infname) == type(u'a'): 
             self.output_win.SetBackgroundColour('white')
             self.show_output("Unable to interpret filename: %s"%infname)
             return
-        input1 = PdfFileReader(file(infname, "rb"))
+        try:
+            input1 = PdfFileReader(file(infname, "rb"))
+        except:
+            self.show_output('Error. Input file may have corruption: %s'%infname)
+            return
        
         # validate page range
         infile_pages = input1.getNumPages()
@@ -398,11 +411,16 @@ class MainWindow(wx.Frame):
         output.write(outputStream)
         outputStream.close()
 
-        self.show_output("Reading:\n   %s\nWriting:\n   %s\nPage(s):  %s"%(infname, outfname, pagelist))
+        self.show_output("Reading:   %s  Writing: %s\n  Page(s): %s"%(infname, outfname, pagelist))
         return
         
     def _append_dropped_file(self,infname, pagelist=None, rotates=None):
         # pages is a string like '1,2,None' meaning from page 1 to page 2 rotate None
+        if str(type(fname)) == "<class 'wx._core.CommandEvent'>":
+            # catch a button click as opposed to a dropped file event.
+            self.show_output("Drag source file onto this button to extract page(s) %s"%pagelist)
+            return
+        
         if pagelist is None:
             return
         if not type(infname) == type(u'a'): 
@@ -535,7 +553,7 @@ class MainWindow(wx.Frame):
         projectname = self._read_log_win_plain()
         if not projectname:
             return
-        url = self.image_grabber.get_OnBase_project(projectname, projectyear=None, doctype="MAP")  
+        url = self.image_grabber.get_OnBase_project(projectname, projectyear=None, doctype=None)  
         print url
         if (url):
             self.show_output('OnBase docs found for"%s"'%projectname, append=False)
@@ -629,12 +647,19 @@ class MainWindow(wx.Frame):
             user_pages = self.pdfpagelist_win.GetValue()
             ranges = (x.split("-") for x in user_pages.split(","))
             pagelist = np.array([i for r in ranges for i in range(int(r[0]), int(r[-1]) + 1)])
+        except:
+            self.show_output('Unable to interpret page list, no action taken:\n"%s"'%user_pages)
+        
+        try:    
             if self.build_mode: 
                 self._append_dropped_file(fname, pagelist=pagelist)
             else:                
                 self._split_dropped_file(fname, pagelist=pagelist)
         except:
-            self.show_output('Unable to interpret page list, no action taken:\n"%s"'%user_pages)
+            print "shouldnt get here", fname
+            
+
+            
 
     def ButtonBuild(self,event):
         if not self.build_mode:
@@ -759,7 +784,36 @@ class MainWindow(wx.Frame):
         initstring = self.loglist_win.GetValue()
         OK,msg = self.image_grabber.initialze_logins(initstring)
         self.show_output(msg, append=False)
-       
+
+    def OnPdfDir(self,e):
+        """ user selects the directory for dumping pdf files  
+            
+            default name is obtained from the image_grabber (which reads it from the .ini file)
+            new name is sent to the image_grabber to manage.
+        """
+        pdfdir = self.image_grabber.get_pdfdir()
+#         pdfdir = self.image_grabber.userdict[pdfdirkey]
+#         pdfdir = self.prefix
+        if not pdfdir:
+            pdfdir = os.curdir
+
+        dlg = wx.FileDialog(self, "Choose directory for downloaded images that are pdf files.",
+                    pdfdir, style=wx.FD_CHANGE_DIR, 
+                    wildcard="Temp dir for PDF files (*.*)|*.*" )
+        if dlg.ShowModal() == wx.ID_OK:
+            print 'dlg.GetPath()',dlg.GetPath()
+            #pdfpath = os.path(dlg.GetPath())
+            pdfdir = os.path.dirname(dlg.GetPath())
+            self.image_grabber.userdict["temp_file_path"] = pdfdir
+            self.image_grabber.prefix = pdfdir
+            print "dlg OK: fname = %s"%pdfdir
+        else:
+            print "dlg not OK"
+            return False
+        dlg.Destroy()
+        msg = self.image_grabber.set_pdfdir(pdfdir)
+        if msg:
+            self.show_output(msg, append=False)
 
     def OnExit(self,e):
         # Exit without comment or double check
