@@ -13,7 +13,7 @@
 """
 from cgitb import html
 
-print "based on   http://stockrt.github.io/p/emulating-a-browser-in-python-with-mechanize/"
+#print "based on   http://stockrt.github.io/p/emulating-a-browser-in-python-with-mechanize/"
 
 import mechanize
 import cookielib
@@ -21,25 +21,26 @@ import webbrowser
 import os
 import urllib2
 
-print "imports done"
+#print "imports done"
 import keyring
 import getpass
 import base64
+
 class PasswordKeeper(object):
     """ A simple and only lightly obfuscating password manager.
         Do not use this class for critical passwords.
         Passwords are stored using the OS keyring service (?) and can be accessed in subsequent launches.
     """
     
-    def __init__(self, ringname):
+    def __init__(self):
         """ initialization requires naming of a keyring service. 
             However, later calls allow using a differently named service 'ringname', but there is not yet a call to alter the stored ringname.
             The only allowed user name is the system user name.
         """
-        self.ringname = ringname
+        #self.ringname = ringname
         self.username = getpass.getuser()
-        print 'ringname = "%s"'%self.ringname
-        print 'username = "%s"'%self.username
+        #print 'ringname = "%s"'%self.ringname
+        #print 'username = "%s"'%self.username
     
     def set(self, ringname=None, password=None, prompt=None):
         """ The pasword is obfuscated using base64.b64encode, and stored in a keyring """
@@ -47,12 +48,12 @@ class PasswordKeeper(object):
 #         password = kwargs.pop('password', None)
 #         prompt = kwargs.pop('prompt', None)
         if not ringname:
-            ringname = self.ringname
+            return False
         if password:
             keyring.set_password( ringname, self.username, base64.b64encode(password) )
             return True
         elif prompt:
-            keyring.set_password( self.ringname, self.username, base64.b64encode( getpass.getpass(prompt).strip() ) )
+            keyring.set_password( ringname, self.username, base64.b64encode( getpass.getpass(prompt).strip() ) )
             return True
         else:
             return False
@@ -60,14 +61,16 @@ class PasswordKeeper(object):
     def get(self,ringname=None):
         """ The pasword is extracted from the keyring, and returned in clear """
         if not ringname:
-            ringname = self.ringname
+            return None
+            #ringname = self.ringname
         p = keyring.get_password(ringname,self.username)
         if p:  return base64.b64decode(p)
         else:  return None
             
     def clear(self,ringname=None):
         if not ringname:
-            ringname = self.ringname
+            return None
+            #ringname = self.ringname
         keyring.delete_password(ringname, self.username)
 
 
@@ -103,20 +106,21 @@ class Well_image_grabber():
 #         print rows
 #         print 80*';'
         self.userdict = {}
+        self.pdfdirkey = "temp_file_path"
         for keyvalue in rows.split('\n'):
 #             print 'A ',keyvalue
             if not len(keyvalue)>2:
                 continue
             key,value = keyvalue.split()
 #             print 'B ',key,value
-            if key == "temp_file_path":
+            if key == self.pdfdirkey:
                 if os.path.exists(value):
                     self.userdict[key] = value
             else:
                 self.userdict[key] = value
         self.prefix = self.userdict.get('temp_file_path')
         self.DBGmode = False
-        self.passwordkeeper = PasswordKeeper(ringname='MDH well record image retrieval')
+        self.passwordkeeper = PasswordKeeper() #ringname='MDH well record image retrieval')
 #         for key,value in self.userdict.iteritems():
 #             print key,value
             
@@ -130,36 +134,25 @@ class Well_image_grabber():
 #         self.DBGmode = False
 #         self.passwordkeeper = PasswordKeeper(ringname='MDH well record image retrieval')
 
-    def set_pdfdir(self):
-        pdfdirkey = "temp_file_path"
-        pdfdir = self.userdict[pdfdirkey]
-#        pdfdir = self.prefix
-        if not pdfdir:
-            pdfdir = os.curdir
-        #f = open(initfile,'r')
-        dlg = wx.FileDialog(self, "Choose destination file",
-                    pdfdir, style=wx.FD_CHANGE_DIR, 
-                    wildcard="Temp dir for PDF files (*.*)|*.*" )
-        if dlg.ShowModal() == wx.ID_OK:
-            print 'dlg.GetPath()',dlg.GetPath()
-            #pdfpath = os.path(dlg.GetPath())
-            pdfdir = os.path.dirname(dlg.GetPath())
-            self.userdict["temp_file_path"] = pdfdir
-            self.prefix = pdfdir
-            print "dlg OK: fname = %s"%pdfdir
-        else:
-            print "dlg not OK"
+    def get_pdfdir(self):
+        return self.userdict.get(self.pdfdirkey, None)
+    
+    def set_pdfdir(self,pdfdir):
+        if not os.path.exists(pdfdir):
             return False
-        dlg.Destroy()
-        #self.show_output(msg, append=False)
+        self.userdict[self.pdfdirkey] = pdfdir
+        fname = self.write_initfile()
+        if fname:
+            msg = 'Edited initfile: %s\nSet pdf file directory to "%s"'%(fname,pdfdir)
+            return msg
+
+    def write_initfile(self):
         f = open(self.initfile,'w')
-        keys = self.userdict.keys()
-        keys.sort()
         fmt = "%s\t%s\n"
         for key,value in sorted(self.userdict.iteritems()):
             f.write(fmt%(key,value))
         f.close()                
-
+        return f.name
     
 
     def initialze_logins(self, initstring): 
@@ -405,7 +398,6 @@ class Well_image_grabber():
         br.select_form(nr=0)               # Find first form of web page
         br.form["username"] = mdhuser
         br.form["password"] = mdhpassword    
-        #br.form["password"] =  self.passwordkeeper.get(ringname='MDH well record image retrieval')
         br.submit()                    # submit
     
     #    print "\n =============== log in response ==============\n"
