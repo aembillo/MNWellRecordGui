@@ -174,6 +174,8 @@ class Well_image_grabber():
                     return False, 'Unable to parse "%s"'%ring_value
         print '... All done with initializing ...'
         return True, 'Logins stored for \n  ' + ('\n  '.join(OKlist))
+    
+
 #         if UniqueNo.upper() == "MGSLOGIN":
 #             if len(UniqueNo) != 2:
 #                 return (False,'Initialize MGS login: "MGSLOGIN <url_pattern>"')

@@ -47,11 +47,11 @@ class MainWindow(wx.Frame):
         title = "MNWell Record Viewer"
         wx.Frame.__init__(self,parent,wx.ID_ANY, title)
 
-        # Let's give the app a little color
-        self.label_color  = '#AAFFEE'
-        self.logbtn_color = '#80FFE6'
-        self.pdfbtn_color = '#AAFFCC'
-        self.pdfbtn_color2= '#80FFB3'
+#         # Let's give the app a little color
+#         self.label_color  = '#AAFFEE'
+#         self.logbtn_color = '#80FFE6'
+#         self.pdfbtn_color = '#AAFFCC'
+#         self.pdfbtn_color2= '#80FFB3'
 
         # Add text editor windows and a status bar
         # Each of these is within the current instance
@@ -95,27 +95,44 @@ class MainWindow(wx.Frame):
         wx.EVT_MENU(self, ID_PDFDIR, self.OnPdfDir)
         wx.EVT_MENU(self, ID_EXIT, self.OnExit)
 
+       # Let's give the app a little color, where we can
+        self.label_color  = '#AAFFEE'  # pale blue
+        # 
+        #self.MDH_color    = '#DDFFEE'  # very pale blue, almost white
+        #self.MDH_color    = '#FFFFFF'  # white
+        #self.MDH_color    = '#FFFFBB'  # Light yellow 
+        self.MDH_color    = '#55FFEE'  # Light yellow 
+        self.MGS_color    = '#FfFFEE'  # a light blue
+        #self.CWI_color    = '#BBFFEE'  # very pale blue,  
+        self.CWI_color    = '#FFFFBB'  # Light yellow 
+        self.onbase_color = '#11FFEE'  # pale blue
+        self.project_color= '#BBFFEE'
+        #self.project_color= '#FFFFBB'  # Light yellow 
+        self.pdfbtn_color = '#AAFFCC'
+        self.pdfbtn_color2= '#80FFB3'
+
         # Buttons on the right, arranged     vertically, that are for selecting Well Record images.
         self.logbtn_sizer = wx.BoxSizer(wx.VERTICAL)
         btnlistW = (
-            ('  Get MDH image  ', self.ButtonMDHlog, "up to 10 listed well id's from MGS" ),
-            ('Get MGS image', self.ButtonMGSlog, "a single well id from MGS" ),
-            ('Get CWI log', self.ButtonCWIlog, "a well log from CWI-on-line" ),
-            ('Get CWI strat', self.ButtonCWIstrat, "a well stratigraphy log from CWI" ),
-            ('Get OnBase image', self.ButtonOnBaseWellid, "well docs in OnBase by well_id" ),
-            ('Get OnBase Project', self.ButtonOnBaseProject, "project docs in OnBase by Project Name" ),
-            ('Get Project maps', self.ButtonOnBaseProjectMap, "Project maps & inspections in OnBase by Project Name" ),
-            ('Get Project year', self.ButtonOnBaseProjectYear, "Project Registered docs OnBase by Project Name & Year" ),
+            ('  Get MDH image  ', self.ButtonMDHlog, "up to 10 listed well id's from MGS", self.MDH_color),
+            ('Get MGS image', self.ButtonMGSlog, "a single well id from MGS", self.MGS_color),
+            ('Get CWI log', self.ButtonCWIlog, "a well log from CWI-on-line", self.CWI_color),
+            ('Get CWI strat', self.ButtonCWIstrat, "a well stratigraphy log from CWI", self.CWI_color),
+            ('Get OnBase image', self.ButtonOnBaseWellid, "well docs in OnBase by well_id", self.onbase_color),
+            ('Get OnBase Project', self.ButtonOnBaseProject, "project docs in OnBase by Project Name", self.project_color),
+            ('Get Project maps', self.ButtonOnBaseProjectMap, "Project maps & inspections in OnBase by Project Name", self.project_color),
+            ('Get Project year', self.ButtonOnBaseProjectYear, "Project Registered docs OnBase by Project Name & Year", self.project_color),
             #('Get em ALL', self.ButtonALLlogs, "all related documents" ),
         )
-        for label,method,tip in btnlistW:
+        for label,method,tip,color in btnlistW:
             id = new_id()
             btn = wx.Button(self, id, label)
             btn.Bind(wx.EVT_BUTTON, method)
             btn.Bind(wx.EVT_ENTER_WINDOW, self.Enter_image_button_area)
             btn.SetToolTip(wx.ToolTip("Click to find %s"%tip))
-            btn.SetBackgroundColour(self.logbtn_color)
+            btn.SetBackgroundColour(color)
             self.logbtn_sizer.Add(btn,1,wx.EXPAND)
+
 
         # Buttons on the right, vertically, that are drop-file areas for existing pdf files.
         self.pdfbtnR_sizer = wx.BoxSizer(wx.VERTICAL)
