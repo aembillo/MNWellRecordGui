@@ -5,7 +5,7 @@ import wx
 import os
 
 # for manipulating pdf files
-from pyPdf import PdfFileWriter, PdfFileReader
+from pyPdf import PdfFileWriter, PdfFileReader      # license: modified BSD 
 import numpy as np
 import webbrowser        
 
