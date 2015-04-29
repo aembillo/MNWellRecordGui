@@ -106,6 +106,7 @@ class MainWindow(wx.Frame):
         #self.CWI_color    = '#BBFFEE'  # very pale blue,  
         self.CWI_color    = '#FFFFBB'  # Light yellow 
         self.onbase_color = '#11FFEE'  # pale blue
+        self.local_color  = '#EEEEAA'  # Light yellow 
         self.project_color= '#BBFFEE'
         #self.project_color= '#FFFFBB'  # Light yellow 
         self.pdfbtn_color = '#AAFFCC'
@@ -119,9 +120,10 @@ class MainWindow(wx.Frame):
             ('Get CWI log', self.ButtonCWIlog, "a well log from CWI-on-line", self.CWI_color),
             ('Get CWI strat', self.ButtonCWIstrat, "a well stratigraphy log from CWI", self.CWI_color),
             ('Get OnBase image', self.ButtonOnBaseWellid, "well docs in OnBase by well_id", self.onbase_color),
+            ('Get OnBase Local PLS', self.ButtonOnBaseLocal, "Local File docs in OnBase by Unique No or Twp Rng Section", self.local_color),
             ('Get OnBase Project', self.ButtonOnBaseProject, "project docs in OnBase by Project Name", self.project_color),
             ('Get Project maps', self.ButtonOnBaseProjectMap, "Project maps & inspections in OnBase by Project Name", self.project_color),
-            ('Get Project year', self.ButtonOnBaseProjectYear, "Project Registered docs OnBase by Project Name & Year", self.project_color),
+            ('Get Project year', self.ButtonOnBaseProjectYear, 'Registered docs in OnBase by "Project Name Year" (e.g. "FHR 2010")', self.project_color),
             #('Get em ALL', self.ButtonALLlogs, "all related documents" ),
         )
         for label,method,tip,color in btnlistW:
@@ -244,6 +246,8 @@ class MainWindow(wx.Frame):
         self.build_output = None
 
         self.image_grabber = Well_image_grabber(self.initfile)
+        self._init_wellman_ids()
+        self.init_wellman_projectnames()
 
         #  wx.StaticText(self, label="Your name :")
 
@@ -380,7 +384,27 @@ class MainWindow(wx.Frame):
 #         self.show_output("Page %i of  %s \nwritten to  %s."%(pagenum,infile, outfile))
 #         return
 #         
-                
+
+    def _init_wellman_ids(self, fname=r'T:\Wells\ImageViewerData\well_ids.csv'):
+        f = open(fname)
+        rows = f.read()
+        f.close
+        self.wellman_ids = {}
+        for row in rows.split('\n')[:-1]:
+            row = row.split(',')
+            self.wellman_ids[row[0][1:-1].strip()] = row[1].strip()   
+        print 'Initialized well ids from %s.\n    %i records read into dictionary.'%(fname,len(self.wellman_ids) )             
+    
+    def init_wellman_projectnames(self,fname = r'T:\Wells\ImageViewerData\projectnames.csv'):
+        f = open(fname)
+        rows = f.read()
+        f.close
+        self.wellman_projectnames = []
+        for row in rows.split('\n'):
+            val = row[1:-1].strip()
+            if val:
+                self.wellman_projectnames.append(val)
+
     def _split_dropped_file(self,infname, pagelist=None, rotates=None):
         # pages is a string like '1,2,None' meaning from page 1 to page 2 rotate None
         if pagelist is None:
@@ -433,11 +457,11 @@ class MainWindow(wx.Frame):
         
     def _append_dropped_file(self,infname, pagelist=None, rotates=None):
         # pages is a string like '1,2,None' meaning from page 1 to page 2 rotate None
-        if str(type(fname)) == "<class 'wx._core.CommandEvent'>":
+        if str(type(infname)) == "<class 'wx._core.CommandEvent'>":
             # catch a button click as opposed to a dropped file event.
             self.show_output("Drag source file onto this button to extract page(s) %s"%pagelist)
             return
-        
+        print '_append_dropped_file (%s)'%infname
         if pagelist is None:
             return
         if not type(infname) == type(u'a'): 
@@ -560,10 +584,46 @@ class MainWindow(wx.Frame):
     def ButtonOnBaseWellid(self,event):
         #print 'ButtonCWIstrat'        
         loglist = self._read_log_win()
-        url = self.image_grabber.get_OnBase_images(loglist[0]) 
+        try:
+            id = loglist[0].strip()
+            print 'searching OnBase for id "%s"'%id,
+            wid = self.wellman_ids.get(id,id)  #if id is found in the wellman_ids dictionary, then return the associated id.
+            print ', mapped to id "%s"'%wid
+            url = self.image_grabber.get_OnBase_images(wid,'DAKCO_OnBase_well_id_url') 
+        except:
+            self.show_output('Well id must be an integer', append=False)
         if (url):
             self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
             webbrowser.open_new_tab(url) 
+
+        
+    def ButtonOnBaseLocal(self,event):
+        #print 'ButtonOnBaseLocal'        
+        ''' if txt is Twp Rng Section, e.g. "27 19 2", change to std fmt "027 09 02"
+            otherwise assume it is a unique number.
+        '''
+        txt = self._read_log_win_plain()
+        try:
+            t,r,s = txt.strip().replace('-',' ').split()
+            PLS = '%03d+%02d+%02d'%(int(t),int(r),int(s))
+            assert len(PLS) == 9 
+            url = self.image_grabber.get_OnBase_images(PLS,'DAKCO_OnBase_twp_rng_sec_url')
+            txt = PLS
+            msg = 'OnBase Local docs found by Unique: %s'%txt + '\n' +url
+        except:
+            txt = txt.strip().split()[0] 
+            if len(txt) <= 7:
+                url = self.image_grabber.get_OnBase_images(txt,'DAKCO_OnBase_well_unique_url')
+                msg =  'OnBase Local records found for Twp Rng Section: %s '%txt + '\n' +url
+            else:
+                self.show_output('Must enter Unique number, or Twp Rng Sec as "27 22 4"', append=False)
+                return
+        if (url):
+            self.show_output(msg, append=False)
+            print url
+            print 'http://EDWEB3/AppNet/docpop/docpop.aspx?KT942_0_0_0=027+23+09&clienttype=activex&keytype='
+            OK = webbrowser.open_new_tab(url) 
+            print 'webbrowser.open_new_tab(url) = %s'%(OK)
 
     def ButtonOnBaseProject(self,event):
         #print 'ButtonCWIstrat'        

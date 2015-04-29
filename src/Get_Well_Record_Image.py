@@ -10,6 +10,20 @@
         consider simplifying using the Requests library:
             http://docs.python-requests.org/en/latest/index.html
     Language Python 2.7
+    
+
+    7007 Well TwpRngSection Records by Twp-Rng-Section only - 
+        http://EDWEB3/AppNet/docpop/docpop.aspx?KT942_0_0_0=027+23+09&clienttype=activex&keytype=
+    NOTE: the sample includes a value of 027 23 09 for the 7007 Well TwpRng Section keyword
+    
+    7007 Well TwpRngSection Records by Well Unique only - 
+        http://EDWEB3/AppNet/docpop/docpop.aspx?KT659_0_0_0=427029&clienttype=activex&cqid=1107
+    NOTE: the sample includes a value of 427029 for the 7007 Well Unique keyword
+    
+    DocPop url for 7007 Well Disclosure Documents: 
+        http://EDWEB3/AppNet/docpop/docpop.aspx?KT905_0_0_0=9946&clienttype=activex&cqid=1097
+    NOTE: the sample includes a value of 9946 for the 7007 Well Dsiclosure ID keyword
+    
 """
 from cgitb import html
 
@@ -197,11 +211,11 @@ class Well_image_grabber():
         fname = tempfile.NamedTemporaryFile(basename+"_", suffix='.pdf', delete=False)
         return fname
 
-    def get_OnBase_images(self,well_id):
-        oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_well_id_url')
-        oburl = self.userdict.get('DAKCO_OnBase_well_id_url')
+    def get_OnBase_images(self,value, urlkey="DAKCO_OnBase_well_id_url"):
+        #oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_well_id_url')
+        oburl = self.userdict.get(urlkey)
 #         oburl = "http://EDWEB1/AppNet/docpop/docpop.aspx?KT636_0_0_0=%s&clienttype=activex&cqid=1017"%well_id.upper()
-        oburl = oburl%well_id.upper()
+        oburl = oburl%value.upper()
         return oburl
 
     def get_OnBase_project(self,projectname,projectyear=None, doctype=None):
@@ -215,7 +229,9 @@ class Well_image_grabber():
             e.g. MPCA BUNNY'S SERVICE CENTER => MPCA+BUNNY%27S+SERVICE+CENTER
             Note that the url's do not appear to be case sensitive, but we'll upper case the project name for clarity.
         """
-        projectname = projectname.strip().upper().replace(" ","+").replace("'","%27")
+        # Some ASCII characters are not permitted in the url, and must be replaced with the ASCII HEX Codes.
+        # E.G. replace "#" with "%23".   A list of codes can be found at:  http://www.ascii-code.com/    
+        projectname = projectname.strip().upper().replace(" ","+").replace("'","%27").replace("#","%23").replace("&","%26").replace("@","%40")
         if (projectyear is None) and (doctype is None):
 #             url = "http://EDWEB3/AppNet/docpop/docpop.aspx?KT646_0_0_0=%s&clienttype=activex&cqid=1068"%projectname
 #             oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_project_url')
