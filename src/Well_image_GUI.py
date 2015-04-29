@@ -625,9 +625,23 @@ class MainWindow(wx.Frame):
             OK = webbrowser.open_new_tab(url) 
             print 'webbrowser.open_new_tab(url) = %s'%(OK)
 
+    def _project_picker(self):
+        dlg = wx.SingleChoiceDialog(self, 'Project Names', 'Select project:', self.wellman_projectnames, wx.CHOICEDLG_STYLE)
+        if dlg.ShowModal() == wx.ID_OK:
+            projectname = dlg.GetStringSelection()
+            self.SetStatusText('You chose: %s\n' % projectname)
+        else:
+            projectname = None
+        dlg.Destroy()
+        return projectname
+        
     def ButtonOnBaseProject(self,event):
         #print 'ButtonCWIstrat'        
-        projectname = self._read_log_win_plain()
+        
+        #def singlechoice(self, event):
+         
+        #projectname = self._read_log_win_plain()
+        projectname = self._project_picker()
         if not projectname:
             return
         url = self.image_grabber.get_OnBase_project(projectname, projectyear=None, doctype=None)  
@@ -640,32 +654,42 @@ class MainWindow(wx.Frame):
 
     def ButtonOnBaseProjectMap(self,event):
         #print 'ButtonOnBaseProjectMap'        
-        projectname = self._read_log_win_plain()
+#         projectname = self._read_log_win_plain()
+#         if not projectname:
+#             return
+        projectname = self._project_picker()
         if not projectname:
             return
 
         url = self.image_grabber.get_OnBase_project(projectname, projectyear=None, doctype="MAP")  
         print url        
         if (url):
-            self.show_output('OnBase docs found for"%s"'%projectname, append=False)
+            self.show_output('OnBase Project Maps found for"%s"'%projectname, append=False)
             webbrowser.open_new_tab(url) 
         else:
             self.show_output('No OnBase Project Maps for "%s"'%projectname, append=False)
 
     def ButtonOnBaseProjectYear(self,event):
+#         try:
+#             args = self._read_log_win_plain().split()
+#             projectyear = args[-1]
+#             projectname = ' '.join(args[:-1])
         try:
-            args = self._read_log_win_plain().split()
-            projectyear = args[-1]
-            projectname = ' '.join(args[:-1])
+            projectyear = '%s'%(int(self._read_log_win_plain()))
         except:
+            self.show_output('Error: You must enter a 4-digit permit year in the top window') 
             return
+        projectname = self._project_picker()
+        if not projectname:
+            return
+        
         url = self.image_grabber.get_OnBase_project(projectname, projectyear=projectyear, doctype=None)  
         print url        
         if (url):
-            self.show_output('OnBase docs found for"%s"'%projectname, append=False)
+            self.show_output('OnBase docs found for "%s %s"'%(projectname,projectyear), append=False)
             webbrowser.open_new_tab(url) 
         else:
-            self.show_output('No OnBase Project Maps for "%s"'%projectname, append=False)
+            self.show_output('No OnBase Project docs found for "%s %s"'%(projectname,projectyear), append=False)
             
             
 #     def ButtonProject(self,event):
