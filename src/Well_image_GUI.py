@@ -505,7 +505,7 @@ class MainWindow(wx.Frame):
         '''
         txt = self._read_log_win_plain()
         try:
-            t,r,s = txt.strip().replace('-',' ').split()
+            t,r,s = txt.strip().replace('-',' ').replace('/',' ').replace(',',' ').split()
             PLS = '%03d+%02d+%02d'%(int(t),int(r),int(s))
             assert len(PLS) == 9 
             url = self.image_grabber.get_OnBase_images(PLS,'DAKCO_OnBase_twp_rng_sec_url')
@@ -521,10 +521,7 @@ class MainWindow(wx.Frame):
                 return
         if (url):
             self.show_output(msg, append=False)
-            print url
-            print 'http://EDWEB3/AppNet/docpop/docpop.aspx?KT942_0_0_0=027+23+09&clienttype=activex&keytype='
             OK = webbrowser.open_new_tab(url) 
-            print 'webbrowser.open_new_tab(url) = %s'%(OK)
 
     def _project_picker(self):
         dlg = wx.SingleChoiceDialog(self, 'Project Names', 'Select project:', self.wellman_projectnames, wx.CHOICEDLG_STYLE)

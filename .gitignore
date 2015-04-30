@@ -1,4 +1,4 @@
 *.pyc
 *.bak
-src\WellRecordGui.ini
-WellRecordGui.ini
+*.ini
+
