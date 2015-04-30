@@ -264,11 +264,10 @@ class MainWindow(wx.Frame):
                    '    %s'%(PdfFileReader.__name__),
                    '    %s'%(PdfFileWriter.__name__),                  
                    ))
-#         self.general_instruction_text = (
-#             'Paste a valid checksum value in the upper window, and drag the file onto a button')
         self.specific_instruction_text = (
             'Enter a valid page range into the upper window, then drag a pdf file onto the Custom button.')
         self.help_text = (
+            'WELCOME\n'+\
             '   To retrieve well log images, or CWI database well logs, '+\
             'enter a unique number, well_id, or RELATEID in the top window, '+\
             'and select a button to the right.\n'+\
@@ -276,115 +275,17 @@ class MainWindow(wx.Frame):
             'The tools perform split and merge of specified pages of pdf files. '+\
             'Drag an input file onto the one of the page range buttons, and it will split '+\
             'off the indicated page to a new file. '+\
-            'New documents are named after the old one with a suffix indicating the page number.\n'+\
+            'The new document is put in the same directory as the original. '+\
+            'The new document is named after the old one with a suffix indicating the page number(s).\n'+\
             '   Use the Custom button to split off 2 or more pages together; '+\
             'enter the page or page range in the lower window using commas and dashes.\n'+\
             '   Begin merging pages from two or more pdf files by pressing the Build button. '+\
             'Then add pages as described above, and press the Publish button to finish. '+\
-            '(No pdf documents will be overwritten.)') 
+            '(No pdf documents will be overwritten.)\n'+\
+            '   If the pdf file is reported to be corrupt, try opening it and '+\
+            're-saving it in your pdf viewer.') 
         
-        
-#     def compute_checksum(self,fname,block_size=2**20,method='SHA1'):        
-#         if   method=="MD5"    : hasher = hashlib.md5()  
-#         elif method=="SHA1"   : hasher = hashlib.sha1()  
-#         elif method=="SHA224" : hasher = hashlib.sha224()  
-#         elif method=="SHA256" : hasher = hashlib.sha256()  
-#         elif method=="SHA384" : hasher = hashlib.sha384()  
-#         elif method=="SHA512" : hasher = hashlib.sha512()  
-#         else: return "Hash method not recognized: %s"%method 
-#     
-#         try:
-#             f = open( fname, 'r' )
-#             while True:         
-#                 data = f.read(block_size)         
-#                 if not data:             
-#                     break         
-#                 hasher.update(data)   
-#             f.close()  
-#             return hasher.hexdigest() 
-#         except:
-#             return 'Unable to compute hash for file %s'%fname
-
-#     def pdf_split_one_page(self,infile,outfile,pagenum):
-#         # split off selected pagenum from infile as outfile.
-#         # infile and outfile are .pdf.  the first page is pagenum=1
-#         # Page 1 uses pagenum=1, and pythonic page number = 0
-#         #fin = r"E:\bill\scratch\A.pdf"
-#         input1 = PdfFileReader(file(infile, "rb"))
-#         
-#         infile_pages = input1.getNumPages()
-#         if infile_pages < pagenum:
-#             self.show_output("ERROR -- Document %s has only %i pages."%(infile, infile_pages))
-#             return
-#         
-#         fout = r"E:\bill\scratch\Asplit.pdf"
-#         output = PdfFileWriter()
-#         
-#         # add selected page from input1 to output document, unchanged
-#         pypagenum = pagenum-1
-#         output.addPage(input1.getPage(pypagenum))
-# 
-#         outputStream = file(outfile, "wb")
-#         output.write(outputStream)
-#         outputStream.close()
-# 
-#         self.show_output("Page %i of  %s \nwritten to  %s."%(pagenum,infile, outfile))
-#         return
-# 
-#         
-# #         # add page 2 from input1, but rotated clockwise 90 degrees
-# #         output.addPage(input1.getPage(1).rotateClockwise(90))
-# #         
-# #         # add page 3 from input1, rotated the other way:
-# #         output.addPage(input1.getPage(2).rotateCounterClockwise(90))
-# #         # alt: output.addPage(input1.getPage(2).rotateClockwise(270))
-# #        
-#         # # add page 4 from input1, but first add a watermark from another pdf:
-#         # page4 = input1.getPage(3)
-#         # watermark = PdfFileReader(file("watermark.pdf", "rb"))
-#         # page4.mergePage(watermark.getPage(0))
-#         # 
-#         # # add page 5 from input1, but crop it to half size:
-#         # page5 = input1.getPage(4)
-#         # page5.mediaBox.upperRight = (
-#         #     page5.mediaBox.getUpperRight_x() / 2,
-#         #     page5.mediaBox.getUpperRight_y() / 2
-#         # )
-#         # output.addPage(page5)
-# #        
-#         # print how many pages input1 has:
-#         # print "%s has %s pages." % (fin,input1.getNumPages() )
-# #        
-#         # finally, write "output" to document-output.pdf
-# #         outputStream = file(outfile, "wb")
-# #         output.write(outputStream)
-# #         outputStream.close()
-# #         
-# #         print "%s has been written"%fout
-# 
-#     def pdf_split_n_pages(self,infile,outfile,pagelist):
-#         input1 = PdfFileReader(file(infile, "rb"))
-#         
-#         infile_pages = input1.getNumPages()
-#         if infile_pages < np.max(pagelist):
-#             self.show_output("ERROR -- Document %s has only %i pages."%(infile, infile_pages))
-#             return
-#         
-#         fout = r"E:\bill\scratch\Asplit.pdf"
-#         output = PdfFileWriter()
-#         
-#         # add selected page from input1 to output document, unchanged
-#         pypagenum = pagenum-1
-#         output.addPage(input1.getPage(pypagenum))
-# 
-#         outputStream = file(outfile, "wb")
-#         output.write(outputStream)
-#         outputStream.close()
-# 
-#         self.show_output("Page %i of  %s \nwritten to  %s."%(pagenum,infile, outfile))
-#         return
-#         
-
+ 
     def _init_wellman_ids(self, fname=r'T:\Wells\ImageViewerData\well_ids.csv'):
         f = open(fname)
         rows = f.read()
@@ -426,7 +327,7 @@ class MainWindow(wx.Frame):
        
         # validate page range
         infile_pages = input1.getNumPages()
-        if (np.min(pagelist) <= 0) or (infile_pages < np.max(pagelist)):
+        if (min(pagelist) <= 0) or (infile_pages < max(pagelist)):
             self.show_output("ERROR -- Document %s has %i pages. Cannot print range %s"%(infname, infile_pages, pagelist))
             return
         
@@ -480,7 +381,7 @@ class MainWindow(wx.Frame):
         
         # validate page range
         infile_pages = input1.getNumPages()
-        if (np.min(pagelist) <= 0) or (infile_pages < np.max(pagelist)):
+        if (min(pagelist) <= 0) or (infile_pages < max(pagelist)):
             self.show_output("\nERROR -- Document has %i pages. Cannot print range %s"%(infile_pages, pagelist), append=True)
             return
         
@@ -677,7 +578,7 @@ class MainWindow(wx.Frame):
         try:
             projectyear = '%s'%(int(self._read_log_win_plain()))
         except:
-            self.show_output('Error: You must enter a 4-digit permit year in the top window') 
+            self.show_output('Please enter the 4-digit permit year in the top window first.') 
             return
         projectname = self._project_picker()
         if not projectname:
@@ -747,7 +648,7 @@ class MainWindow(wx.Frame):
         try:
             user_pages = self.pdfpagelist_win.GetValue()
             ranges = (x.split("-") for x in user_pages.split(","))
-            pagelist = np.array([i for r in ranges for i in range(int(r[0]), int(r[-1]) + 1)])
+            pagelist = [i for r in ranges for i in range(int(r[0]), int(r[-1]) + 1)]
         except:
             self.show_output('Unable to interpret page list, no action taken:\n"%s"'%user_pages)
         
@@ -852,13 +753,6 @@ class MainWindow(wx.Frame):
             new_txt = '%s\n%s'%(old_txt,new_txt)
         #print 'new_txtB = "%s"'%new_txt
         self.output_win.SetValue(new_txt)
-
-#     def _get_pagelist(self):
-#         in_txt = self.pdfpagelist_win.GetValue()
-#         for d in ' ,':
-#             if d in in_txt:
-#                 pagelist = np.array(s.split(d),dtype=int)
-#                 return pagelist
 
     def clear_txt_win(self, thewin):
         thewin.SetValue("")
