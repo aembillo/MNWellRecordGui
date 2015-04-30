@@ -10,20 +10,6 @@
         consider simplifying using the Requests library:
             http://docs.python-requests.org/en/latest/index.html
     Language Python 2.7
-    
-
-    7007 Well TwpRngSection Records by Twp-Rng-Section only - 
-        http://EDWEB3/AppNet/docpop/docpop.aspx?KT942_0_0_0=027+23+09&clienttype=activex&keytype=
-    NOTE: the sample includes a value of 027 23 09 for the 7007 Well TwpRng Section keyword
-    
-    7007 Well TwpRngSection Records by Well Unique only - 
-        http://EDWEB3/AppNet/docpop/docpop.aspx?KT659_0_0_0=427029&clienttype=activex&cqid=1107
-    NOTE: the sample includes a value of 427029 for the 7007 Well Unique keyword
-    
-    DocPop url for 7007 Well Disclosure Documents: 
-        http://EDWEB3/AppNet/docpop/docpop.aspx?KT905_0_0_0=9946&clienttype=activex&cqid=1097
-    NOTE: the sample includes a value of 9946 for the 7007 Well Dsiclosure ID keyword
-    
 """
 from cgitb import html
 
@@ -114,6 +100,7 @@ class Well_image_grabber():
                 temp_file_path  <Where pdf files are dumped.  Multiple paths can be specified, the last one that exists will be used.>
         """   
         self.initfile = initfile 
+        assert os.path.exists(initfile), "Init file not found: "+initfile
         f = open(initfile,'r')
         rows = f.read()
         f.close()
@@ -211,10 +198,8 @@ class Well_image_grabber():
         fname = tempfile.NamedTemporaryFile(basename+"_", suffix='.pdf', delete=False)
         return fname
 
-    def get_OnBase_images(self,value, urlkey="DAKCO_OnBase_well_id_url"):
-        #oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_well_id_url')
-        oburl = self.userdict.get(urlkey)
-#         oburl = "http://EDWEB1/AppNet/docpop/docpop.aspx?KT636_0_0_0=%s&clienttype=activex&cqid=1017"%well_id.upper()
+    def get_OnBase_images(self,value,key='DAKCO_OnBase_well_id_url'):
+        oburl = self.userdict.get(key)
         oburl = oburl%value.upper()
         return oburl
 
@@ -233,18 +218,12 @@ class Well_image_grabber():
         # E.G. replace "#" with "%23".   A list of codes can be found at:  http://www.ascii-code.com/    
         projectname = projectname.strip().upper().replace(" ","+").replace("'","%27").replace("#","%23").replace("&","%26").replace("@","%40")
         if (projectyear is None) and (doctype is None):
-#             url = "http://EDWEB3/AppNet/docpop/docpop.aspx?KT646_0_0_0=%s&clienttype=activex&cqid=1068"%projectname
-#             oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_project_url')
             oburl = self.userdict.get('DAKCO_OnBase_project_url')
             url = oburl%projectname
         elif (projectyear is None) and (doctype == "MAP"):
-#             url = "http://EDWEB3/AppNet/docpop/docpop.aspx?KT646_0_0_0=%s&clienttype=activex&cqid=1106"%projectname
-#             oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_project_map_url')
             oburl = self.userdict.get('DAKCO_OnBase_project_map_url')
             url = oburl%projectname
         elif (projectyear) and (doctype is None):
-#             url = "http://EDWEB3/AppNet/docpop/docpop.aspx?KT646_0_0_0=%s&KT863_0_0_0=%i&clienttype=activex&cqid=1067"%(projectname,int(projectyear))
-#             oburl = self.passwordkeeper.get(ringname='DAKCO_OnBase_project_year_url')
             oburl = self.userdict.get('DAKCO_OnBase_project_year_url')
             try:
                 yr = int(projectyear)
@@ -260,14 +239,6 @@ class Well_image_grabber():
         if self.DBGmode:
             return os.path.join(self.prefix,"190471.pdf")
 
-#        print 'get_MGS_image, UniqueNo ="%s"'%UniqueNo
-#         if UniqueNo.upper() == "MGSLOGIN":
-#             if len(UniqueNo) != 2:
-#                 return (False,'Initialize MGS login: "MGSLOGIN <url_pattern>"')
-#             self.passwordkeeper.set(ringname='MGS well record image url',password=UniqueNo)
-#             return (False, 'MGSLOGIN has been initialized')
-        
-#         mgsurl = self.passwordkeeper.get(ringname='MGS_well_record_image_url') #'http://mgsweb2.mngs.umn.edu/welllogs/%s.pdf'%UniqueNo
         mgsurl = self.userdict.get('MGS_well_record_image_url')
         #print 'mgsurl ="%s"'%mgsurl
         if not mgsurl:
@@ -322,27 +293,7 @@ class Well_image_grabber():
         """
         if self.DBGmode:
             return os.path.join(self.prefix,"190471.pdf")
-        #well_list = UniqueNos.replace("\t"," ").replace("\n"," ").replace(","," ").replace("/"," ").split()
 
-#         print WellList
-#         for n,w in enumerate(WellList):     
-#         #well1,well2 = '766413','766414'
-#             print ["wellnbr_%i"%(n+1)], w
-#         return
-    
-        #MDH:
-#         if well_list[0].upper() == "MDHLOGIN":
-#             if len(well_list) != 4:
-#                 return (False,'Initialize MDH login: "MDHLOGIN <user> <password> <url_pattern>"')
-#             self.passwordkeeper.set(ringname='MDH well record image user',password=well_list[1])
-#             self.passwordkeeper.set(ringname='MDH well record image password',password=well_list[2])
-#             self.passwordkeeper.set(ringname='MDH well record image url',password=well_list[3])
-#             return (False, 'MDHLOGIN has been initialized')
-# #                         prompt='Enter password for MDH well record image retrieval:')
-        
-#         self.passwordkeeper.set(ringname='MDH well record image user',password=mdhuser)
-#         self.passwordkeeper.set(ringname='MDH well record image password',password=mdhpassword)
-#         self.passwordkeeper.set(ringname='MDH well record image url',password=mdhurl)
         ringuser = 'MDH_well_record_image_user'
         ringpass = 'MDH_well_record_image_password'
         ringurl  = 'MDH_well_record_image_url'
@@ -353,14 +304,7 @@ class Well_image_grabber():
         for key,ring in  ((mdhuser,ringuser),(mdhpassword,ringpass),(mdhurl,ringurl)):
             if key is None:
                 return False,'Missing initialization value for "%s"'%ring
-#         if (mdhuser is None) or (mdhpassword is None) or (mdhurl is None):
-#             return (False,'Initialize MDH login: "MDHLOGIN <user> <password> <url_pattern>"')
 
-#         print mdhurl
-#         print mdhuser
-#         print mdhpassword
-#         print '=================='
-#         assert False
         # Browser
         br = mechanize.Browser()
         

@@ -6,7 +6,6 @@ import os
 
 # for manipulating pdf files
 from pyPdf import PdfFileWriter, PdfFileReader      # license: modified BSD 
-import numpy as np
 import webbrowser        
 
 from Get_Well_Record_Image import Well_image_grabber
@@ -485,17 +484,19 @@ class MainWindow(wx.Frame):
     def ButtonOnBaseWellid(self,event):
         #print 'ButtonCWIstrat'        
         loglist = self._read_log_win()
-        try:
+        if 1: #try:
             id = loglist[0].strip()
             print 'searching OnBase for id "%s"'%id,
             wid = self.wellman_ids.get(id,id)  #if id is found in the wellman_ids dictionary, then return the associated id.
             print ', mapped to id "%s"'%wid
             url = self.image_grabber.get_OnBase_images(wid,'DAKCO_OnBase_well_id_url') 
-        except:
-            self.show_output('Well id must be an integer', append=False)
-        if (url):
-            self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
-            webbrowser.open_new_tab(url) 
+            if (url):
+                self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
+                webbrowser.open_new_tab(url) 
+            else:
+                self.show_output('Well unique no or id not found: %s, %s'%(id,wid), append=False)
+#         except:
+#             self.show_output('Well unique no or id not found', append=False)
 
         
     def ButtonOnBaseLocal(self,event):
@@ -509,13 +510,12 @@ class MainWindow(wx.Frame):
             PLS = '%03d+%02d+%02d'%(int(t),int(r),int(s))
             assert len(PLS) == 9 
             url = self.image_grabber.get_OnBase_images(PLS,'DAKCO_OnBase_twp_rng_sec_url')
-            txt = PLS
-            msg = 'OnBase Local docs found by Unique: %s'%txt + '\n' +url
+            msg =  'OnBase Local records found for Twp Rng Section: %s '%PLS + '\n' +url
         except:
-            txt = txt.strip().split()[0] 
-            if len(txt) <= 7:
-                url = self.image_grabber.get_OnBase_images(txt,'DAKCO_OnBase_well_unique_url')
-                msg =  'OnBase Local records found for Twp Rng Section: %s '%txt + '\n' +url
+            val = txt.strip().split()[0] 
+            if len(val) <= 7:
+                url = self.image_grabber.get_OnBase_images(val,'DAKCO_OnBase_well_unique_url')
+                msg = 'OnBase Local docs found by Unique: %s'%val + '\n' +url
             else:
                 self.show_output('Must enter Unique number, or Twp Rng Sec as "27 22 4"', append=False)
                 return
@@ -534,11 +534,6 @@ class MainWindow(wx.Frame):
         return projectname
         
     def ButtonOnBaseProject(self,event):
-        #print 'ButtonCWIstrat'        
-        
-        #def singlechoice(self, event):
-         
-        #projectname = self._read_log_win_plain()
         projectname = self._project_picker()
         if not projectname:
             return
@@ -552,9 +547,6 @@ class MainWindow(wx.Frame):
 
     def ButtonOnBaseProjectMap(self,event):
         #print 'ButtonOnBaseProjectMap'        
-#         projectname = self._read_log_win_plain()
-#         if not projectname:
-#             return
         projectname = self._project_picker()
         if not projectname:
             return
@@ -568,10 +560,6 @@ class MainWindow(wx.Frame):
             self.show_output('No OnBase Project Maps for "%s"'%projectname, append=False)
 
     def ButtonOnBaseProjectYear(self,event):
-#         try:
-#             args = self._read_log_win_plain().split()
-#             projectyear = args[-1]
-#             projectname = ' '.join(args[:-1])
         try:
             projectyear = '%s'%(int(self._read_log_win_plain()))
         except:
@@ -589,34 +577,6 @@ class MainWindow(wx.Frame):
         else:
             self.show_output('No OnBase Project docs found for "%s %s"'%(projectname,projectyear), append=False)
             
-            
-#     def ButtonProject(self,event):
-#         self.show_output('Project not implemented', append=False)
-#         return 
-#         loglist = self._read_log_win()
-#         url = self.image_grabber.get_OnBase_images(loglist[0]) 
-#         if (url):
-#             self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
-#             webbrowser.open_new_tab(url) 
-# 
-#     def ButtonProjectMap(self,event):
-#         self.show_output('Project-Map not implemented', append=False)
-#         return 
-#         loglist = self._read_log_win()
-#         url = self.image_grabber.get_OnBase_images(loglist[0]) 
-#         if (url):
-#             self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
-#             webbrowser.open_new_tab(url) 
-# 
-#     def ButtonProjectYear(self,event):
-#         self.show_output('Project-Year not implemented', append=False)
-#         return 
-#         loglist = self._read_log_win()
-#         url = self.image_grabber.get_OnBase_images(loglist[0]) 
-#         if (url):
-#             self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
-#             webbrowser.open_new_tab(url) 
-
 
     def ButtonALLlogs(self,event):
         print 'ButtonALLlogs'        
