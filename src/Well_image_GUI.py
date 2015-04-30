@@ -444,15 +444,13 @@ class MainWindow(wx.Frame):
             return None
 
     def ButtonMDHlog(self,event):
-        #print 'ButtonMDHlog'
         loglist = self._read_log_win()
-        #print 'MDH loglist:',loglist
         OK,fname = self.image_grabber.get_MDH_image(loglist)
         if OK: 
-            self.show_output('MDH image: \n%s'%fname, append=False)
+            self.show_output(                'MDH image: \n%s'%fname, append=True)
             webbrowser.open_new_tab(fname) 
         else:
-            self.show_output(fname, append=False)   
+            self.show_output(fname, append=True)   
     def ButtonMGSlog(self,event):
         #print 'ButtonMGSlog'        
         loglist = self._read_log_win()

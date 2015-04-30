@@ -125,16 +125,6 @@ class Well_image_grabber():
 #         for key,value in self.userdict.iteritems():
 #             print key,value
             
-#         # Determine the file location for placing the image files.
-#         if not prefix:
-#             for prefix in ('C:/_OnBase_scan_temp_folder/scratch_images','E:/bill/scratch/images','xxx'):
-#                 if os.path.exists(prefix):
-#                     break
-#         assert prefix != 'xxx'
-#         self.prefix = prefix
-#         self.DBGmode = False
-#         self.passwordkeeper = PasswordKeeper(ringname='MDH well record image retrieval')
-
     def get_pdfdir(self):
         return self.userdict.get(self.pdfdirkey, None)
     
@@ -386,7 +376,7 @@ class Well_image_grabber():
     
         print "\n =============== Submitted unique Response ==============\n"
         html = br.response().read()    
-
+        
         # check that we have received a pdf document, and not a message of no images found
         if html.split()[0] == "<!DOCTYPE":
             msg = "No images for record(s) %s found at MDH"%(", ".join(well_list))
