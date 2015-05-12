@@ -287,7 +287,7 @@ class MainWindow(wx.Frame):
  
     def _init_wellman_ids(self, fname=r'T:\Wells\ImageViewerData\well_ids.csv'):
         f = open(fname)
-        rows = f.read()
+        rows = f.read().upper()
         f.close
         self.wellman_ids = {}
         for row in rows.split('\n')[:-1]:
@@ -482,19 +482,16 @@ class MainWindow(wx.Frame):
     def ButtonOnBaseWellid(self,event):
         #print 'ButtonCWIstrat'        
         loglist = self._read_log_win()
-        if 1: #try:
-            id = loglist[0].strip()
-            print 'searching OnBase for id "%s"'%id,
-            wid = self.wellman_ids.get(id,id)  #if id is found in the wellman_ids dictionary, then return the associated id.
-            print ', mapped to id "%s"'%wid
-            url = self.image_grabber.get_OnBase_images(wid,'DAKCO_OnBase_well_id_url') 
-            if (url):
-                self.show_output('OnBase docs found: "%s"'%loglist[0], append=False)
-                webbrowser.open_new_tab(url) 
-            else:
-                self.show_output('Well unique no or id not found: %s, %s'%(id,wid), append=False)
-#         except:
-#             self.show_output('Well unique no or id not found', append=False)
+        val = loglist[0].strip().upper()
+        print 'searching OnBase for id "%s"'%val,
+        id = self.wellman_ids.get(val,val)  #if val is not found in the wellman_ids dictionary, then just use val.
+        print ', mapped to id "%s"'%id
+        url = self.image_grabber.get_OnBase_images(id,'DAKCO_OnBase_well_id_url') 
+        if (url):
+            self.show_output('OnBase docs found: "%s"'%val, append=False)
+            webbrowser.open_new_tab(url) 
+        else:
+            self.show_output('Well unique no or id not found: %s, %s'%(val,id), append=False)
 
         
     def ButtonOnBaseLocal(self,event):

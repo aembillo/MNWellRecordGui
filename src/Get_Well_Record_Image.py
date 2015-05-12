@@ -276,7 +276,7 @@ class Well_image_grabber():
         return cwiurl
         #webbrowser.open_new_tab(cwiurl)
         
-    def get_MDH_image(self,well_list):
+    def get_MDH_image(self,well_list,verbose=False):
         """ the UniqueNos should be formatted as 6 character text, e.g. "123456", rather than as a RelateID
             up to 10 different unique nos can be passed.  They should be a single splittable string.
             The web bit is pretty tedious.  
@@ -292,6 +292,8 @@ class Well_image_grabber():
         mdhurl      = self.passwordkeeper.get(ringname=ringurl )
         
         for key,ring in  ((mdhuser,ringuser),(mdhpassword,ringpass),(mdhurl,ringurl)):
+            if verbose:
+                print "%s %s"%(ring,key)
             if key is None:
                 return False,'Missing initialization value for "%s"'%ring
 
@@ -400,7 +402,7 @@ class Test(unittest.TestCase):
     def testGrabbing(self):
         import webbrowser
         W = Well_image_grabber("WellRecordGui.ini")
-        if 1:
+        if 0:
             UniqueNo = "x207689" #"190471"
             url = W.get_CWI_log(UniqueNo)
             #print 80*"*" + "\n%s\n"%url + 80*"*"
@@ -418,7 +420,7 @@ class Test(unittest.TestCase):
                 except webbrowser.Error:
                     print 'webbrowser.Error', webbrowser.Error.message
 
-        elif 1:
+        if 0:
             UniqueNo = "207689" #"190471"
             print W.prefix
             print W._get_new_filename(UniqueNo,"pdf")
@@ -427,21 +429,21 @@ class Test(unittest.TestCase):
             if OK: 
                 webbrowser.open_new_tab(fname)
             
-        elif 0:
+        if 0:
             wellid = 15340  
             url = W.get_OnBase_images(wellid) 
             if (url):
                 webbrowser.open_new_tab(url)  
                   
-        elif 0:
+        if 1:
             #UniqueNos = "678244" #"420967"
             well_list = ["678244"]
-            fname = W.get_MDH_image(well_list)
+            fname = W.get_MDH_image(well_list,verbose=True)
             if fname is not None: 
                 print fname
                 webbrowser.open_new_tab(fname[1])
             
-        elif 0:
+        if 0:
             #UniqueNos = "268045" #"420967"
             well_list = ["268045"]
             fname = W.get_MDH_image(well_list)
