@@ -190,7 +190,7 @@ class Well_image_grabber():
 
     def get_OnBase_images(self,value,key='DAKCO_OnBase_well_id_url'):
         oburl = self.userdict.get(key)
-        oburl = oburl%value.upper()
+        oburl = (oburl%value).upper()
         return oburl
 
     def get_OnBase_project(self,projectname,projectyear=None, doctype=None):

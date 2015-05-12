@@ -100,13 +100,14 @@ class MainWindow(wx.Frame):
         #self.MDH_color    = '#DDFFEE'  # very pale blue, almost white
         #self.MDH_color    = '#FFFFFF'  # white
         #self.MDH_color    = '#FFFFBB'  # Light yellow 
-        self.MDH_color    = '#55FFEE'  # Light yellow 
-        self.MGS_color    = '#FfFFEE'  # a light blue
+        self.MDH_color    = '#11FFEE'  # medium blue 
+        self.CWI_color    = '#FfFFEE'  # a light blue
         #self.CWI_color    = '#BBFFEE'  # very pale blue,  
-        self.CWI_color    = '#FFFFBB'  # Light yellow 
-        self.onbase_color = '#11FFEE'  # pale blue
-        self.local_color  = '#EEEEAA'  # Light yellow 
-        self.project_color= '#BBFFEE'
+        self.MGS_color    = '#EEEEAA'  # Light yellow
+        self.onbase_color = '#55CCFF'  # pale blue
+        self.local_color  = '#FFFFBB'  # Light yellow  
+        self.project_color= '#EEBBEE'
+        self.disclosure_color= '#FFFFFF' # Light blue
         #self.project_color= '#FFFFBB'  # Light yellow 
         self.pdfbtn_color = '#AAFFCC'
         self.pdfbtn_color2= '#80FFB3'
@@ -123,6 +124,7 @@ class MainWindow(wx.Frame):
             ('Get OnBase Project', self.ButtonOnBaseProject, "project docs in OnBase by Project Name", self.project_color),
             ('Get Project maps', self.ButtonOnBaseProjectMap, "Project maps & inspections in OnBase by Project Name", self.project_color),
             ('Get Project year', self.ButtonOnBaseProjectYear, 'Registered docs in OnBase by "Project Name Year" (e.g. "FHR 2010")', self.project_color),
+            ('Get Disclosure Number', self.ButtonOnBaseDisclosureNum, 'Disclosure certificates in OnBase by Dak.Co. Number")', self.disclosure_color),
             #('Get em ALL', self.ButtonALLlogs, "all related documents" ),
         )
         for label,method,tip,color in btnlistW:
@@ -133,6 +135,7 @@ class MainWindow(wx.Frame):
             btn.SetToolTip(wx.ToolTip("Click to find %s"%tip))
             btn.SetBackgroundColour(color)
             self.logbtn_sizer.Add(btn,1,wx.EXPAND)
+
 
 
         # Buttons on the right, vertically, that are drop-file areas for existing pdf files.
@@ -572,6 +575,22 @@ class MainWindow(wx.Frame):
         else:
             self.show_output('No OnBase Project docs found for "%s %s"'%(projectname,projectyear), append=False)
             
+    def ButtonOnBaseDisclosureNum(self,event):
+        numlist = self._read_log_win()
+        val = numlist[0].strip()
+        if 1: #try:
+            id = int(val)
+            url = self.image_grabber.get_OnBase_images(id,'DAKCO_OnBase_disclosure_id_url') 
+            if (url):
+                self.show_output('OnBase Disclosures found: "%s"'%val, append=False)
+                webbrowser.open_new_tab(url) 
+            else:
+                self.show_output('Disclosure number not found: %s, %s'%(val,id), append=False)
+        else: #except:
+            self.show_output('Error. Did you enter a numeric disclosure number? Entered: "%s"'%val, append=False)
+        
+        
+        #DAKCO_OnBase_disclosure_id_url
 
     def ButtonALLlogs(self,event):
         print 'ButtonALLlogs'        
