@@ -284,7 +284,7 @@ class Well_image_grabber():
         if self.DBGmode:
             return os.path.join(self.prefix,"190471.pdf")
 
-        ringuser = 'MDH_well_record_image_user'
+        ringuser = 'MDH well record image user' #'MDH_well_record_image_user'
         ringpass = 'MDH_well_record_image_password'
         ringurl  = 'MDH_well_record_image_url'
         mdhuser     = self.passwordkeeper.get(ringname=ringuser)
