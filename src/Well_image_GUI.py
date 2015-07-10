@@ -19,6 +19,7 @@ def new_id():
 # Set up some button numbers for the menu
 ID_ABOUT   = new_id()
 ID_INIT    = new_id()
+ID_PASS    = new_id()
 ID_PDFDIR  = new_id()
 ID_EXIT    = new_id()
 ID_HELP    = new_id()
@@ -71,25 +72,29 @@ class MainWindow(wx.Frame):
         self.output_win.SetFont(font)
 
 
-        # Setting up the menu. filemenu is a local variable at this stage.
-        filemenu= wx.Menu()
+        # Setting up the menu. mainmenu is a local variable at this stage.
+        mainmenu= wx.Menu()
+        helpmenu= wx.Menu()
         # The & character indicates the short cut key
-        filemenu.Append(ID_HELP, "&Help"," Instructions for use")
-        filemenu.Append(ID_ABOUT, "&About"," Information about this program")
-        filemenu.Append(ID_INIT, "&Initialize"," Initialze site logins")
-        filemenu.Append(ID_PDFDIR, "&pdfDirectory"," Set directory for pdf files")
-        filemenu.AppendSeparator()
-        filemenu.Append(ID_EXIT,"E&xit"," Terminate the program")
+        helpmenu.Append(ID_HELP, "&Help"," Instructions for use")
+        helpmenu.Append(ID_ABOUT, "&About"," Information about this program")
+        mainmenu.Append(ID_PASS, "&Logins"," Initialze Site logins")
+        mainmenu.Append(ID_INIT, "&Re-Initialize"," Re-read initialization files")
+        mainmenu.Append(ID_PDFDIR, "&pdfDirectory"," Set output directory for MDH and MGS pdf files")
+        mainmenu.AppendSeparator()
+        mainmenu.Append(ID_EXIT,"E&xit"," Terminate the program")
 
         # Creating the menubar.
         menuBar = wx.MenuBar()
-        menuBar.Append(filemenu,"&File") # Adding the "filemenu" to the MenuBar
+        menuBar.Append(mainmenu,"&Main") # Adding the "mainmenu" to the MenuBar
+        menuBar.Append(helpmenu,"&Help") # Adding the "helpmenu" to the MenuBar
         self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
         # Note - previous line stores the whole of the menu into the current object
 
         # Define the code to be run when a menu option is selected
         wx.EVT_MENU(self, ID_HELP, self.OnHelp)
         wx.EVT_MENU(self, ID_ABOUT, self.OnAbout)
+        wx.EVT_MENU(self, ID_PASS, self.OnPass)
         wx.EVT_MENU(self, ID_INIT, self.OnInit)
         wx.EVT_MENU(self, ID_PDFDIR, self.OnPdfDir)
         wx.EVT_MENU(self, ID_EXIT, self.OnExit)
@@ -239,9 +244,9 @@ class MainWindow(wx.Frame):
         
         # initialize message text and input and output window values
         self.prepare_messages()
-        self.loglist_win.SetValue("<Unique numbers or well_id's here>")
-        self.pdfpagelist_win.SetValue("<Enter custom pdf file page ranges here>")
-        self.output_win.SetValue(self.help_text )
+        #self.loglist_win.SetValue("<Unique numbers or well_id's here>")
+        #self.pdfpagelist_win.SetValue("<Enter custom pdf file page ranges here>")
+        #self.output_win.SetValue(self.help_text )
         self.output_status_text = 'Results display here'
         
         self.build_mode = False
@@ -444,19 +449,22 @@ class MainWindow(wx.Frame):
         if (loglist.count>0):
             return loglist
         else:
+            self.show_output("Please enter search criteria in the top window")
             return None
 
     def ButtonMDHlog(self,event):
         loglist = self._read_log_win()
+        if not (loglist): return
         OK,fname = self.image_grabber.get_MDH_image(loglist)
         if OK: 
-            self.show_output(                'MDH image: \n%s'%fname, append=True)
+            self.show_output(                'MDH image: \n%s'%fname, append=False)
             webbrowser.open_new_tab(fname) 
         else:
-            self.show_output(fname, append=True)   
+            self.show_output(fname, append=False)   
     def ButtonMGSlog(self,event):
         #print 'ButtonMGSlog'        
         loglist = self._read_log_win()
+        if not (loglist): return
         #print 'MGS loglist:',loglist[0]
         OK,fname = self.image_grabber.get_MGS_image(loglist[0])
         if OK: 
@@ -469,6 +477,7 @@ class MainWindow(wx.Frame):
     def ButtonCWIlog(self,event):
         #print 'ButtonCWIlog'        
         loglist = self._read_log_win()
+        if not (loglist): return
         #print 'loglist:',loglist
         url = self.image_grabber.get_CWI_log(loglist[0])
         #print 'url= "%s"'%url
@@ -478,6 +487,7 @@ class MainWindow(wx.Frame):
     def ButtonCWIstrat(self,event):
         #print 'ButtonCWIstrat'        
         loglist = self._read_log_win()
+        if not (loglist): return
         url = self.image_grabber.get_CWI_log(loglist[0],Type="STRAT")
         if (url):
             self.show_output('CWI strat log found: "%s"'%loglist[0], append=False)
@@ -485,13 +495,14 @@ class MainWindow(wx.Frame):
     def ButtonOnBaseWellid(self,event):
         #print 'ButtonCWIstrat'        
         loglist = self._read_log_win()
+        if not (loglist): return
         val = loglist[0].strip().upper()
         print 'searching OnBase for id "%s"'%val,
         id = self.wellman_ids.get(val,val)  #if val is not found in the wellman_ids dictionary, then just use val.
         print ', mapped to id "%s"'%id
         url = self.image_grabber.get_OnBase_images(id,'DAKCO_OnBase_well_id_url') 
         if (url):
-            self.show_output('OnBase docs found: "%s"'%val, append=False)
+            self.show_output('Requesting OnBase docs for: "%s"'%val, append=False)
             webbrowser.open_new_tab(url) 
         else:
             self.show_output('Well unique no or id not found: %s, %s'%(val,id), append=False)
@@ -508,14 +519,14 @@ class MainWindow(wx.Frame):
             PLS = '%03d+%02d+%02d'%(int(t),int(r),int(s))
             assert len(PLS) == 9 
             url = self.image_grabber.get_OnBase_images(PLS,'DAKCO_OnBase_twp_rng_sec_url')
-            msg =  'OnBase Local records found for Twp Rng Section: %s '%PLS + '\n' +url
+            msg =  'Requesting OnBase Local records by Twp Rng Section: %s '%PLS + '\n' +url
         except:
             val = txt.strip().split()[0] 
-            if len(val) <= 7:
+            if (len(val) >= 4) and (len(val) <= 7):
                 url = self.image_grabber.get_OnBase_images(val,'DAKCO_OnBase_well_unique_url')
-                msg = 'OnBase Local docs found by Unique: %s'%val + '\n' +url
+                msg = 'Requesting OnBase Local records by Unique: %s'%val + '\n' +url
             else:
-                self.show_output('Must enter Unique number, or Twp Rng Sec as "27 22 4"', append=False)
+                self.show_output('Must enter Unique number, or Twp Rng Sec as "27 22 4" or "027 22 04"', append=False)
                 return
         if (url):
             self.show_output(msg, append=False)
@@ -538,7 +549,7 @@ class MainWindow(wx.Frame):
         url = self.image_grabber.get_OnBase_project(projectname, projectyear=None, doctype=None)  
         print url
         if (url):
-            self.show_output('OnBase docs found for"%s"'%projectname, append=False)
+            self.show_output('Requesting OnBase docs for"%s"'%projectname, append=False)
             webbrowser.open_new_tab(url) 
         else:
             self.show_output('No OnBase docs for "%s"'%projectname, append=False)
@@ -560,6 +571,8 @@ class MainWindow(wx.Frame):
     def ButtonOnBaseProjectYear(self,event):
         try:
             projectyear = '%s'%(int(self._read_log_win_plain()))
+            assert len(projectyear)==4
+            assert int(projectyear) > 1900
         except:
             self.show_output('Please enter the 4-digit permit year in the top window first.') 
             return
@@ -570,7 +583,7 @@ class MainWindow(wx.Frame):
         url = self.image_grabber.get_OnBase_project(projectname, projectyear=projectyear, doctype=None)  
         print url        
         if (url):
-            self.show_output('OnBase docs found for "%s %s"'%(projectname,projectyear), append=False)
+            self.show_output('Requesting OnBase docs for "%s %s"'%(projectname,projectyear), append=False)
             webbrowser.open_new_tab(url) 
         else:
             self.show_output('No OnBase Project docs found for "%s %s"'%(projectname,projectyear), append=False)
@@ -582,7 +595,7 @@ class MainWindow(wx.Frame):
             id = int(val)
             url = self.image_grabber.get_OnBase_images(id,'DAKCO_OnBase_disclosure_id_url') 
             if (url):
-                self.show_output('OnBase Disclosures found: "%s"'%val, append=False)
+                self.show_output('Requesting OnBase Disclosures for: "%s"'%val, append=False)
                 webbrowser.open_new_tab(url) 
             else:
                 self.show_output('Disclosure number not found: %s, %s'%(val,id), append=False)
@@ -720,10 +733,9 @@ class MainWindow(wx.Frame):
         #print 'new_txtA = "%s"'%new_txt
         if append:
             old_txt = self.output_win.GetValue()
-            #print 'old_txt  = "%s"'%old_txt
-            new_txt = '%s\n%s'%(old_txt,new_txt)
-        #print 'new_txtB = "%s"'%new_txt
-        self.output_win.SetValue(new_txt)
+            self.output_win.SetValue('%s\n%s'%(new_txt,old_txt))
+        else:
+            self.output_win.SetValue(new_txt)
 
     def clear_txt_win(self, thewin):
         thewin.SetValue("")
@@ -743,12 +755,21 @@ class MainWindow(wx.Frame):
         self.aboutme = wx.MessageDialog( self, self.about_me_text, "About Well_Image_GUI.py", wx.OK)
         self.aboutme.ShowModal() 
 
-    def OnInit(self,e):
+    def OnPass(self,e):
         """ we'll use the log window to read in the initialization strings, but we will not parse it 
             the usual way, so we'll read it in raw
         """
         initstring = self.loglist_win.GetValue()
         OK,msg = self.image_grabber.initialze_logins(initstring)
+        self.show_output(msg, append=False)
+
+    def OnInit(self,e):
+        """ re-read the initialization files.
+        """
+        self._init_wellman_ids()
+        self.init_wellman_projectnames()
+        msg = self.image_grabber.read_initfile() 
+        msg = 'Re-initialized wellman-ids, project names, and urls \n%s'%msg
         self.show_output(msg, append=False)
 
     def OnPdfDir(self,e):

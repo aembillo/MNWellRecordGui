@@ -101,25 +101,25 @@ class Well_image_grabber():
         """   
         self.initfile = initfile 
         assert os.path.exists(initfile), "Init file not found: "+initfile
-        f = open(initfile,'r')
-        rows = f.read()
-        f.close()
-#         print rows
-#         print 80*';'
-        self.userdict = {}
+#         f = open(initfile,'r')
+#         rows = f.read()
+#         f.close()
+# #         print rows
+# #         print 80*';'
         self.pdfdirkey = "temp_file_path"
-        for keyvalue in rows.split('\n'):
-#             print 'A ',keyvalue
-            if not len(keyvalue)>2:
-                continue
-            key,value = keyvalue.split()
-#             print 'B ',key,value
-            if key == self.pdfdirkey:
-                if os.path.exists(value):
-                    self.userdict[key] = value
-            else:
-                self.userdict[key] = value
-        self.prefix = self.userdict.get('temp_file_path')
+        self.userdict = {}
+        self.read_initfile()
+#         for keyvalue in rows.split('\n'):
+# #             print 'A ',keyvalue
+#             if not len(keyvalue)>2:
+#                 continue
+#             key,value = keyvalue.split()
+# #             print 'B ',key,value
+#             if key == self.pdfdirkey:
+#                 if os.path.exists(value):
+#                     self.userdict[key] = value
+#             else:
+#                 self.userdict[key] = value
         self.DBGmode = False
         self.passwordkeeper = PasswordKeeper() #ringname='MDH well record image retrieval')
 #         for key,value in self.userdict.iteritems():
@@ -132,23 +132,45 @@ class Well_image_grabber():
         if not os.path.exists(pdfdir):
             return False
         self.userdict[self.pdfdirkey] = pdfdir
-        fname = self.write_initfile()
-        if fname:
-            msg = 'Edited initfile: %s\nSet pdf file directory to "%s"'%(fname,pdfdir)
-            return msg
+        self.prefix = pdfdir
+#        fname = self.write_initfile()  # Too scary. Could overwrite good with garbage.
+#         if fname:
+#             msg = 'Edited initfile: %s\nSet pdf file directory to "%s"'%(fname,pdfdir)
+#             return msg
 
-    def write_initfile(self):
-        f = open(self.initfile,'w')
-        fmt = "%s\t%s\n"
-        for key,value in sorted(self.userdict.iteritems()):
-            f.write(fmt%(key,value))
-        f.close()                
-        return f.name
+    def read_initfile(self):
+        f = open(self.initfile,'r')
+        rows = f.read()
+        f.close()
+#         print rows
+#         print 80*';'
+        msg = ""
+        for keyvalue in rows.split('\n'):
+#             print 'A ',keyvalue
+            if not len(keyvalue)>2:
+                continue
+            key,value = keyvalue.split()
+#             print 'B ',key,value
+            if key == self.pdfdirkey:
+                msg = self.set_pdfdir(value)
+            else:
+                self.userdict[key] = value
+        return msg
+
+#     def write_initfile(self):
+#         f = open(self.initfile,'w')
+#         fmt = "%s\t%s\n"
+#         for key,value in sorted(self.userdict.iteritems()):
+#             f.write(fmt%(key,value))
+#         f.close()                
+#         return f.name
     
 
     def initialze_logins(self, initstring): 
         """ login information and private url strings are kept in a ring server. """
         print 'initialze_logins(%s)'%( initstring)
+        if not initstring:
+            return False,"No initializations provided"
         OKlist = []
         for ring_value in initstring.split('\n'):
             if ring_value:
@@ -284,7 +306,7 @@ class Well_image_grabber():
         if self.DBGmode:
             return os.path.join(self.prefix,"190471.pdf")
 
-        ringuser = 'MDH well record image user' #'MDH_well_record_image_user'
+        ringuser = 'MDH_well_record_image_user' #'MDH_well_record_image_user'
         ringpass = 'MDH_well_record_image_password'
         ringurl  = 'MDH_well_record_image_url'
         mdhuser     = self.passwordkeeper.get(ringname=ringuser)
@@ -292,10 +314,10 @@ class Well_image_grabber():
         mdhurl      = self.passwordkeeper.get(ringname=ringurl )
         
         for key,ring in  ((mdhuser,ringuser),(mdhpassword,ringpass),(mdhurl,ringurl)):
-            if verbose:
+            if True:
                 print "%s %s"%(ring,key)
-            if key is None:
-                return False,'Missing initialization value for "%s"'%ring
+#             if key is None:
+#                 return False,'Missing initialization value for "%s"'%ring
 
         # Browser
         br = mechanize.Browser()
