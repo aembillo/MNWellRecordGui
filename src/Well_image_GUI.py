@@ -9,6 +9,7 @@ from pyPdf import PdfFileWriter, PdfFileReader      # license: modified BSD
 import webbrowser        
 
 from Get_Well_Record_Image import Well_image_grabber
+from Wellman_odbc import WellmanConnection
 
 __id_counter = 100
 def new_id():
@@ -253,8 +254,11 @@ class MainWindow(wx.Frame):
         self.build_output = None
 
         self.image_grabber = Well_image_grabber(self.initfile)
-        self._init_wellman_ids()
-        self.init_wellman_projectnames()
+
+        self.wellman_connection = WellmanConnection()
+        self.init_wellman_values()
+#         self._init_wellman_ids()
+#         self.init_wellman_projectnames()
 
         #  wx.StaticText(self, label="Your name :")
 
@@ -292,26 +296,29 @@ class MainWindow(wx.Frame):
             '   If the pdf file is reported to be corrupt, try opening it and '+\
             're-saving it in your pdf viewer.') 
         
- 
-    def _init_wellman_ids(self, fname=r'T:\Wells\ImageViewerData\well_ids.csv'):
-        f = open(fname)
-        rows = f.read().upper()
-        f.close
-        self.wellman_ids = {}
-        for row in rows.split('\n')[:-1]:
-            row = row.split(',')
-            self.wellman_ids[row[0][1:-1].strip()] = row[1].strip()   
-        print 'Initialized well ids from %s.\n    %i records read into dictionary.'%(fname,len(self.wellman_ids) )             
-    
-    def init_wellman_projectnames(self,fname = r'T:\Wells\ImageViewerData\projectnames.csv'):
-        f = open(fname)
-        rows = f.read()
-        f.close
-        self.wellman_projectnames = []
-        for row in rows.split('\n'):
-            val = row[1:-1].strip()
-            if val:
-                self.wellman_projectnames.append(val)
+
+    def init_wellman_values(self): 
+        self.wellman_ids,self.wellman_projectnames = self.wellman_connection.get_wellman_values()
+
+#     def _init_wellman_ids(self, fname=r'T:\Wells\ImageViewerData\well_ids.csv'):
+#         f = open(fname)
+#         rows = f.read().upper()
+#         f.close
+#         self.wellman_ids = {}
+#         for row in rows.split('\n')[:-1]:
+#             row = row.split(',')
+#             self.wellman_ids[row[0][1:-1].strip()] = row[1].strip()   
+#         print 'Initialized well ids from %s.\n    %i records read into dictionary.'%(fname,len(self.wellman_ids) )             
+#     
+#     def init_wellman_projectnames(self,fname = r'T:\Wells\ImageViewerData\projectnames.csv'):
+#         f = open(fname)
+#         rows = f.read()
+#         f.close
+#         self.wellman_projectnames = []
+#         for row in rows.split('\n'):
+#             val = row[1:-1].strip()
+#             if val:
+#                 self.wellman_projectnames.append(val)
 
     def _split_dropped_file(self,infname, pagelist=None, rotates=None):
         # pages is a string like '1,2,None' meaning from page 1 to page 2 rotate None
@@ -766,8 +773,9 @@ class MainWindow(wx.Frame):
     def OnInit(self,e):
         """ re-read the initialization files.
         """
-        self._init_wellman_ids()
-        self.init_wellman_projectnames()
+        self.init_wellman_values()
+#         self._init_wellman_ids()
+#         self.init_wellman_projectnames()
         msg = self.image_grabber.read_initfile() 
         msg = 'Re-initialized wellman-ids, project names, and urls \n%s'%msg
         self.show_output(msg, append=False)

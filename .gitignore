@@ -1,4 +1,7 @@
 *.pyc
 *.bak
 *.ini
-
+About_WellRecordGUI.txt
+*.zip
+*.7z
+src/scratch.py
