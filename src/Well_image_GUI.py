@@ -265,13 +265,16 @@ class MainWindow(wx.Frame):
     def prepare_messages(self):
         import platform
         self.about_me_text = '\n'.join((
-                   'MN Well Record Viewer version 0.1',
+                   'MN Well Record Viewer version 0.2',
                    '  Graphical tools for',
                    '    accessing well records, and',   
                    '    splitting and merging pdf files.',
                    ' ',
                    '  Python version: %s'%platform.python_version(),
-                   '  Based on the libraries:',
+                   '  Using libraries: '
+                   '    wx, pyodbc, webbrowser, mechanize, cookielib, urllib2',
+                   '    keyring, getpass, base64',
+                   '  pdf editing tools are based on the libraries:',
                    '    %s'%(PdfFileReader.__name__),
                    '    %s'%(PdfFileWriter.__name__),                  
                    ))

@@ -4,7 +4,6 @@ Created on July 24, 2015
 @author: bomj8
 '''
 import unittest
-import pyodbc
 
 class WellmanConnection():
     def __init__(self):
@@ -13,6 +12,7 @@ class WellmanConnection():
         pass
     
     def get_wellman_values(self):
+        import pyodbc
         con = pyodbc.connect(self.odbc_connection_string)
         self.cur = con.cursor()
         id_dict = self.get_wellman_id_dict()
