@@ -298,8 +298,20 @@ class MainWindow(wx.Frame):
             '   Begin merging pages from two or more pdf files by pressing the Build button. '+\
             'Then add pages as described above, and press the Publish button to finish. '+\
             '(No pdf documents will be overwritten.)\n'+\
+            '\n'+\
+            'TROUBLESHOOTING\n'+\
             '   If the pdf file is reported to be corrupt, try opening it and '+\
-            're-saving it in your pdf viewer.') 
+            're-saving it in your pdf viewer.\n' +\
+            '\n'+\
+            '   DocPop web pages may open with the page appearing empty or with the table of contents unable to open a doc.'+\
+            ' This can be due to having ANOTHER BROWSER WINDOW ALREADY OPEN and ZOOMED IN or OUT.'
+            ' Try opening your browser to any web page and readjusting the magnification before executing the tool.\n'+\ 
+            '   DocPop web pages have a table of contents panel at the top, and a document viewer panel below.'+\
+            ' The divider between the panels can be dragged up and down with the mouse.'+\
+            ' If your browser is open and zoomed in before the tool executes, the top panel may be compressed to 0 height,'+\
+            ' so you only see the empty lower panel - You might be able to pull the divider down.'+\
+            ' If your browser is open and zoomed out before the tool executes, the bottom panel may be compressed to 0 height,'+\
+            ' and the browser window may be extremely wide - you may not be able to pull the divider up.'+\
         
 
     def init_wellman_values(self): 
@@ -511,7 +523,7 @@ class MainWindow(wx.Frame):
             self.show_output('CWI strat log found: "%s"'%loglist[0], append=False)
             webbrowser.open_new_tab(url) 
     def ButtonOnBaseWellid(self,event):
-        #print 'ButtonCWIstrat'        
+        #print 'ButtonOnBaseWellid'        
         loglist = self._read_log_win()
         if not (loglist): return
         val = loglist[0].strip().upper()
@@ -526,6 +538,7 @@ class MainWindow(wx.Frame):
         if (url):
             self.show_output('Requesting OnBase docs for %s'%idmsg, append=False)
             webbrowser.open_new_tab(url) 
+            print 'url = '+url
         else:
             self.show_output('Well unique no or id not found: %s, %s'%(val,id), append=False)
 
