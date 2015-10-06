@@ -22,6 +22,20 @@ class WellmanConnection():
         return id_dict,project_list
     
     def get_wellman_id_dict(self):
+        ''' Queries Wellman for a list of well identifier values, with their well_id's
+        
+            We exclude types 
+                18 (unused unique)           Because we don't want them.
+                19 (wrong unique)            Because we don't want them.
+                 6 (County Disclosure id)    Because they confound with well_id.
+                            
+        
+        TODO:    
+            We might like a more sophisticated query capability, say with ability to choose the identifier type,
+            but this logic is not up to that: using the native llist=>dict method.  Might think of copying the 
+            the wellman data to a local SQLite, or even just keeping the cursor open and using ODBC queries for
+            every individual query: so no need for local dict object at all!
+        '''
         sql = """
         SELECT
             G.well_id_type_value, 
@@ -31,8 +45,9 @@ class WellmanConnection():
         WHERE
             ((NOT(G.well_id_type_value LIKE 'CWI*')  AND
             (G.well_id_type_value)<>'000000')  AND
-            ((G.well_id_type)<>19  AND
-            (G.well_id_type)<>18)) 
+            ((G.well_id_type)<>19) AND
+            ((G.well_id_type)<>18) AND
+            ((G.well_id_type)<>6)) 
         ORDER BY
             G.well_id_type_value, 
             G.well_id;        
