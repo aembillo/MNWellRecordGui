@@ -52,11 +52,12 @@ class PasswordKeeper(object):
         if password:
             keyring.set_password( ringname, self.username, base64.b64encode(password) )
             return True
-        elif prompt:
-            keyring.set_password( ringname, self.username, base64.b64encode( getpass.getpass(prompt).strip() ) )
-            return True
-        else:
-            return False
+        if prompt:
+            password = getpass.getpass(prompt).strip()
+            if password:
+                keyring.set_password( ringname, self.username, base64.b64encode(password) )
+                return True
+        return False
             
     def get(self,ringname=None):
         """ The pasword is extracted from the keyring, and returned in clear """

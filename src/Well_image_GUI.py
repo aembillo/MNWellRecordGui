@@ -11,6 +11,11 @@ import webbrowser
 from Get_Well_Record_Image import Well_image_grabber
 from Wellman_odbc import WellmanConnection
 
+#TODO notes
+# controlling the browser zoom problem
+#  problem noted:  http://stackoverflow.com/questions/28370725/wpf-web-browser-control-inheriting-internet-explorer-zoom-level
+#  use mechanize?:  http://www.pythonforbeginners.com/mechanize/browsing-in-python-with-mechanize/
+
 __id_counter = 100
 def new_id():
     global __id_counter
@@ -305,13 +310,13 @@ class MainWindow(wx.Frame):
             '\n'+\
             '   DocPop web pages may open with the page appearing empty or with the table of contents unable to open a doc.'+\
             ' This can be due to having ANOTHER BROWSER WINDOW ALREADY OPEN and ZOOMED IN or OUT.'
-            ' Try opening your browser to any web page and readjusting the magnification before executing the tool.\n'+\ 
+            ' Try opening your browser to any web page and readjusting the magnification before executing the tool.\n'+\
             '   DocPop web pages have a table of contents panel at the top, and a document viewer panel below.'+\
             ' The divider between the panels can be dragged up and down with the mouse.'+\
             ' If your browser is open and zoomed in before the tool executes, the top panel may be compressed to 0 height,'+\
             ' so you only see the empty lower panel - You might be able to pull the divider down.'+\
             ' If your browser is open and zoomed out before the tool executes, the bottom panel may be compressed to 0 height,'+\
-            ' and the browser window may be extremely wide - you may not be able to pull the divider up.'+\
+            ' and the browser window may be extremely wide - you may not be able to pull the divider up.')
         
 
     def init_wellman_values(self): 
