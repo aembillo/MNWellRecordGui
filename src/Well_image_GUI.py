@@ -29,6 +29,7 @@ ID_PASS    = new_id()
 ID_PDFDIR  = new_id()
 ID_EXIT    = new_id()
 ID_HELP    = new_id()
+ID_DEBUG   = new_id()
 
 
 class MyFileDropTarget(wx.FileDropTarget):
@@ -47,6 +48,7 @@ class MyFileDropTarget(wx.FileDropTarget):
 class MainWindow(wx.Frame):
     def __init__(self,parent):
         #self.initfile = "WellRecordGui.ini"
+        self.DEBUG = False
         self.initfile = os.path.join(os.getcwd(),"WellRecordGui.ini")  #Better,  dumps it in the root source code folder
         print 'inifile:  %s'%self.initfile
         
@@ -84,6 +86,7 @@ class MainWindow(wx.Frame):
         # The & character indicates the short cut key
         helpmenu.Append(ID_HELP, "&Help"," Instructions for use")
         helpmenu.Append(ID_ABOUT, "&About"," Information about this program")
+        #helpmenu.Append(ID_DEBUG, "&Debug"," Toggle Debugging")
         mainmenu.Append(ID_PASS, "&Logins"," Initialze Site logins")
         mainmenu.Append(ID_INIT, "&Re-Initialize"," Re-read initialization files")
         mainmenu.Append(ID_PDFDIR, "&pdfDirectory"," Set output directory for MDH and MGS pdf files")
@@ -100,6 +103,8 @@ class MainWindow(wx.Frame):
         # Define the code to be run when a menu option is selected
         wx.EVT_MENU(self, ID_HELP, self.OnHelp)
         wx.EVT_MENU(self, ID_ABOUT, self.OnAbout)
+        wx.EVT_MENU(self, ID_DEBUG, self.OnDebug)
+        
         wx.EVT_MENU(self, ID_PASS, self.OnPass)
         wx.EVT_MENU(self, ID_INIT, self.OnInit)
         wx.EVT_MENU(self, ID_PDFDIR, self.OnPdfDir)
@@ -794,6 +799,9 @@ class MainWindow(wx.Frame):
     def OnAbout(self,e):
         self.aboutme = wx.MessageDialog( self, self.about_me_text, "About Well_Image_GUI.py", wx.OK)
         self.aboutme.ShowModal() 
+        
+    def OnDebug(self,e):
+        self.DEBUG = not(self.DEBUG)
 
     def OnPass(self,e):
         """ we'll use the log window to read in the initialization strings, but we will not parse it 
