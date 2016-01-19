@@ -1,3 +1,8 @@
+'''
+    Modified 2016-01-19 to latest MWI urls.  
+        Added 'INDEX' option
+        coded 'MAP' option, but it does not work, so commented out.
+'''
 # Get the GUI stuff
 import wx
 
@@ -15,6 +20,9 @@ from Wellman_odbc import WellmanConnection
 # controlling the browser zoom problem
 #  problem noted:  http://stackoverflow.com/questions/28370725/wpf-web-browser-control-inheriting-internet-explorer-zoom-level
 #  use mechanize?:  http://www.pythonforbeginners.com/mechanize/browsing-in-python-with-mechanize/
+
+# VERSION_NUMBER = '0.3  2015'
+VERSION_NUMBER = '1.1  2016-01-19'
 
 __id_counter = 100
 def new_id():
@@ -133,8 +141,10 @@ class MainWindow(wx.Frame):
         btnlistW = (
             ('  Get MDH image  ', self.ButtonMDHlog, "up to 10 listed well id's from MGS", self.MDH_color),
             ('Get MGS image', self.ButtonMGSlog, "a single well id from MGS", self.MGS_color),
-            ('Get CWI log', self.ButtonCWIlog, "a well log from CWI-on-line", self.CWI_color),
-            ('Get CWI strat', self.ButtonCWIstrat, "a well stratigraphy log from CWI", self.CWI_color),
+            ('Get MWI index', self.ButtonCWIindex, "well index page from MWI-on-line", self.CWI_color),
+#             ('Get MWI map', self.ButtonCWImap, "opens the MWI-on-line map", self.CWI_color),
+            ('Get MWI log', self.ButtonCWIlog, "a well log from MWI-on-line", self.CWI_color),
+            ('Get MWI strat', self.ButtonCWIstrat, "a well stratigraphy log from MWI", self.CWI_color),
             ('Get OnBase image', self.ButtonOnBaseWellid, "well docs in OnBase by well_id", self.onbase_color),
             ('Get OnBase Local PLS', self.ButtonOnBaseLocal, "Local File docs in OnBase by Unique No or Twp Rng Section", self.local_color),
             ('Get OnBase Project', self.ButtonOnBaseProject, "project docs in OnBase by Project Name", self.project_color),
@@ -277,7 +287,7 @@ class MainWindow(wx.Frame):
     def prepare_messages(self):
         import platform
         self.about_me_text = '\n'.join((
-                   'MN Well Record Viewer version 0.2',
+                   'MN Well Record Viewer version %s'%VERSION_NUMBER,
                    '  Graphical tools for',
                    '    accessing well records, and',   
                    '    splitting and merging pdf files.',
@@ -513,25 +523,51 @@ class MainWindow(wx.Frame):
         else:
             self.show_output('MGS image "%s" not found'%loglist[0])
             
-            
-    def ButtonCWIlog(self,event):
-        #print 'ButtonCWIlog'        
+    def OpenCWI(self,Type="INDEX"):
         loglist = self._read_log_win()
         if not (loglist): return
         #print 'loglist:',loglist
-        url = self.image_grabber.get_CWI_log(loglist[0])
-        #print 'url= "%s"'%url
+        url = self.image_grabber.get_CWI_log(loglist[0],Type=Type)
+        print 'url= "%s"'%url
         if (url):
-            self.show_output('CWI log found: "%s"'%loglist[0], append=False)
+            self.show_output('MWI record found: "%s"'%loglist[0], append=False)
             webbrowser.open_new_tab(url) 
+    def ButtonCWIindex(self,event):
+        self.OpenCWI(Type="INDEX")
+#     def ButtonCWImap(self,event):   #call to Map page is not working from Python.
+#         self.OpenCWI(Type="MAP")
+    def ButtonCWIlog(self,event):
+        self.OpenCWI(Type="LOG")
     def ButtonCWIstrat(self,event):
-        #print 'ButtonCWIstrat'        
-        loglist = self._read_log_win()
-        if not (loglist): return
-        url = self.image_grabber.get_CWI_log(loglist[0],Type="STRAT")
-        if (url):
-            self.show_output('CWI strat log found: "%s"'%loglist[0], append=False)
-            webbrowser.open_new_tab(url) 
+        self.OpenCWI(Type="STRAT")
+#         #print 'ButtonCWIlog'        
+#         loglist = self._read_log_win()
+#         if not (loglist): return
+#         #print 'loglist:',loglist
+#         url = self.image_grabber.get_CWI_log(loglist[0],Type="INDEX")
+#         #print 'url= "%s"'%url
+#         if (url):
+#             self.show_output('CWI log found: "%s"'%loglist[0], append=False)
+#             webbrowser.open_new_tab(url) 
+#     def ButtonCWIlog(self,event):
+#         #print 'ButtonCWIlog'        
+#         loglist = self._read_log_win()
+#         if not (loglist): return
+#         #print 'loglist:',loglist
+#         url = self.image_grabber.get_CWI_log(loglist[0],Type="LOG")
+#         #print 'url= "%s"'%url
+#         if (url):
+#             self.show_output('CWI log found: "%s"'%loglist[0], append=False)
+#             webbrowser.open_new_tab(url) 
+#     def ButtonCWIstrat(self,event):
+#         #print 'ButtonCWIstrat'        
+#         loglist = self._read_log_win()
+#         if not (loglist): return
+#         url = self.image_grabber.get_CWI_log(loglist[0],Type="STRAT")
+#         if (url):
+#             self.show_output('CWI strat log found: "%s"'%loglist[0], append=False)
+#             webbrowser.open_new_tab(url) 
+
     def ButtonOnBaseWellid(self,event):
         #print 'ButtonOnBaseWellid'        
         loglist = self._read_log_win()

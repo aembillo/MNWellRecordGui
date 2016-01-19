@@ -10,6 +10,10 @@
         consider simplifying using the Requests library:
             http://docs.python-requests.org/en/latest/index.html
     Language Python 2.7
+    
+    Modified 2016-01-19 to latest MWI urls.  
+        Added 'INDEX' option
+        coded 'MAP' option, but it does not work, so commented out.
 """
 from cgitb import html
 
@@ -277,7 +281,7 @@ class Well_image_grabber():
         f.close()
         return True,fname
 
-    def get_CWI_log(self,UniqueNo,Type="LOG"):
+    def get_CWI_log(self,UniqueNo,Type="INDEX"):
         """ the UniqueNo should be formatted as 6 character text, e.g. "123456", rather than as a RelateID
             e.g. 678244
         """
@@ -291,11 +295,20 @@ class Well_image_grabber():
             RelateID = "19W" + ("0000000%s"%(Unique[1:]))[-8:]
         else: 
             RelateID = ("000000000%s"%Unique)[-10:]
+
+        if Type=="LOG":
+            cwiurl = 'https://apps.health.state.mn.us/cwiinfo/welllog.xhtml?wellId=%s'%RelateID
+        elif Type=="STRAT":
+            cwiurl = 'https://apps.health.state.mn.us/cwiinfo/stratreport.xhtml?wellId=%s'%RelateID
+        elif Type=="MAP":
+            cwiurl = 'https://apps.health.state.mn.us/cwi/index.htm?wellid=%s'%RelateID
+        else: #Type=="INDEX"
+            cwiurl = 'https://apps.health.state.mn.us/cwiinfo/index.xhtml?wellId=%s'%RelateID
         
-        if Type=="STRAT":
-            cwiurl = 'http://mdh-agua.health.state.mn.us/cwi/strat_report.asp?wellid=%s'%RelateID
-        else:
-            cwiurl = 'http://mdh-agua.health.state.mn.us/cwi/well_log.asp?wellid=%s'%RelateID
+#         if Type=="STRAT":
+#             cwiurl = 'http://mdh-agua.health.state.mn.us/cwi/strat_report.asp?wellid=%s'%RelateID
+#         else:
+#             cwiurl = 'http://mdh-agua.health.state.mn.us/cwi/well_log.asp?wellid=%s'%RelateID
         return cwiurl
         #webbrowser.open_new_tab(cwiurl)
         
