@@ -48,6 +48,14 @@
 
     Internally, lon,lat usually passed around as fractional degrees, or as text strings.
     (check out https://pypi.python.org/pypi/LatLon/1.0.2)
+    
+    Purpose:
+        Perform coordinate transformations between dakota Co coords, UTM, and lat-lon.
+        Recognize sloppy coordinate transcriptions and unspecified systems:
+           Dakota or UTM:           (x,y) or (y,x)   
+           D.dd, D M.mm, D M s.ss:  (lat,+/-lon) or (+/-lon,lat)
+        Accepts coordinate pairs as strings.
+        Returns coordinates as strings.
 """
 import numpy as np
 
@@ -56,15 +64,21 @@ class DCcoordinate_projector():
         self.ft = 0.3048006096012912  # m / US survey ft
         try: 
             from pyproj import Proj 
+        except:
+            self.active = False
+            self.active_msg = 'Failed at "from pyproj import Proj"'
+            return
+        try:
             self.UTMprojstring = "+proj=utm +zone=15 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
             self.Dakprojstring  = "+proj=lcc +lat_1=44.51666666666667 +lat_2=44.91666666666666 +lat_0=44.47194444444445 +lon_0=-93.31666666666666 +x_0=152400.3048006096 +y_0=30480.06096012192 +a=6378421.989 +b=6357036.347 +units=us-ft +to_meter=0.3048006096012912 +no_defs" 
             self.projUTM = Proj(self.UTMprojstring)
             self._projDak = Proj(self.Dakprojstring)
             self.active = True
+            self.active_msg = 'pyproj and Proj4 operating correctly'
             self.bounding_boxes()
-            
         except:
             self.active = False
+            self.active_msg = 'Failed at projection definitions'
     
     def projDak(self,a,b,inverse=None):
         ''' A thin wrapper around proj4.Proj() to convert DC coords to or from meters. '''
@@ -72,8 +86,8 @@ class DCcoordinate_projector():
             if 1: 
                 a *= self.ft
                 b *= self.ft
-            lon,lat = self._projDak(a,b,inverse=inverse)
-            return lon,lat
+            self.lon,self.lat = self._projDak(a,b,inverse=inverse)
+            return self.lon,self.lat
         else:
             x,y = self._projDak(a,b)
             if 1:   # one version of proj4.exe reports in m rather than ft.
@@ -173,21 +187,24 @@ class DCcoordinate_projector():
                         'D M S.s  :  %s'%self.strDD_MM_SSsss(lon, lat)))
         return rv                
          
-    def all_from_dak(self,dakx,daky,xyerr=None):
-        lon,lat = self.projDak(dakx,daky,inverse=True)
-        utmx,utmy = self.projUTM(lon,lat)
-        return self._all_from_one(dakx, daky, utmx, utmy, lon, lat, xyerr)
+    def all_from_dak(self, dakx,daky, xyerr=None):
+        self.dakx,self.daky = dakx,daky 
+        self.lon,self.lat = self.projDak(self.dakx,self.daky,inverse=True)
+        self.utmx,self.utmy = self.projUTM(self.lon,self.lat)
+        return self._all_from_one(self.dakx,self.daky, self.utmx,self.utmy, self.lon,self.lat, xyerr)
         
 
-    def all_from_UTM(self,utmx,utmy,xyerr=None):
-        lon,lat = self.projUTM(utmx,utmy,inverse=True)
-        dakx,daky = self.projDak(lon,lat)
-        return self._all_from_one(dakx, daky, utmx, utmy, lon, lat, xyerr)
+    def all_from_UTM(self, utmx,utmy, xyerr=None):
+        self.utmx,self.utmy = utmx,utmy 
+        self.lon,self.lat = self.projUTM(self.utmx,self.utmy,inverse=True)
+        self.dakx,self.daky = self.projDak(self.lon,self.lat)
+        return self._all_from_one(self.dakx,self.daky, self.utmx,self.utmy, self.lon,self.lat, xyerr)
 
-    def all_from_lonlat(self,lon,lat,xyerr=None):
-        dakx,daky = self.projDak(lon,lat)
-        utmx,utmy = self.projUTM(lon,lat)
-        return self._all_from_one(dakx, daky, utmx, utmy, lon, lat, xyerr)
+    def all_from_lonlat(self, lon,lat, xyerr=None):
+        self.lon,self.lat = lon,lat 
+        self.dakx,self.daky = self.projDak(self.lon,self.lat)
+        self.utmx,self.utmy = self.projUTM(self.lon,self.lat)
+        return self._all_from_one(self.dakx,self.daky, self.utmx,self.utmy, self.lon,self.lat, xyerr)
         
 #                        
 #     def _utm_2_dak(self,utmx,utmy):
@@ -322,6 +339,11 @@ class Test(unittest.TestCase):
         print P.handle_unspecified_coords('505393.746153, 4933998.97307')
         print '\ntest from dak        600248.828523, 132087.725159'
         print P.handle_unspecified_coords('600248.828523, 132087.725159')
+        print '\ntest direct calls for numeric coords:'
+        print '    dak',P.dakx, P.daky
+        print '    UTM',P.utmx, P.utmy
+        print ' lonlat',P.lon, P.lat
+        
     
     def okestDegreeConversions(self):
          

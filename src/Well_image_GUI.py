@@ -61,6 +61,7 @@ class MainWindow(wx.Frame):
         self.DEBUG = False
         self.initfile = os.path.join(os.getcwd(),"WellRecordGui.ini")  #Better,  dumps it in the root source code folder
         print 'inifile:  %s'%self.initfile
+        startup_msg = 'Startup messages:\n'
         
         title = "MNWell Record Viewer"
         wx.Frame.__init__(self,parent,wx.ID_ANY, title)
@@ -180,10 +181,18 @@ class MainWindow(wx.Frame):
         #########################################################
         try:
             from Coordinate_Transform import DCcoordinate_projector
+        except:
+            self.can_project = False
+            startup_msg += "Unable to import Coordinate_Transform module.\n"
+           
+        try:
             self.Cprojector = DCcoordinate_projector()
             self.can_project = self.Cprojector.active 
+            startup_msg += self.Cprojector.active_msg + '\n'
         except: 
             self.can_project = False
+            startup_msg += "Unable to initialize Coordinate_Transform class.\n"
+            
         if self.can_project:
             self.projbtn_sizer = wx.BoxSizer(wx.HORIZONTAL)
             btnlistp = (('Convert coords',self.ButtonConvertCoords),
@@ -311,6 +320,7 @@ class MainWindow(wx.Frame):
         
         self.build_mode = False
         self.build_output = None
+        self.show_output(startup_msg)
 
         self.image_grabber = Well_image_grabber(self.initfile)
 
